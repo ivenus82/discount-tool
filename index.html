@@ -124,6 +124,7 @@ tr:nth-child(even) td{background:var(--row)}
         <label>Ignore extra discount up to (Rs, round-off)</label><input type="number" id="s_tol">
         <label style="margin-top:10px">MacBook Neo extra % if Gripp combo on bill</label><input type="number" step="0.001" id="s_combo">
         <label style="margin-top:10px">Item List MRP column</label><input type="text" id="s_ilmrp">
+        <label style="margin-top:10px">Approval words in remark (comma)</label><input type="text" id="s_appr">
         <div class="actions">
           <button class="sec" id="expBtn" type="button">Export settings</button>
           <button class="sec" id="impBtn" type="button">Import settings</button>
@@ -163,7 +164,8 @@ const DEFAULTS = {
   loan: "FIN, CREDIT, EMI, LOAN",
   tol: 100,
   combo: 0.01,
-  ilmrp: "Sale Price"
+  ilmrp: "Sale Price",
+  appr: "APPRO, APPOV, APRROV, APROV, APP BY"
 };
 const LS_KEY = "discountToolSettings_v1";
 
@@ -206,7 +208,7 @@ function applySettings(s){
   $("s_exec").value = s.exec.join("\n");
   $("s_map").value = Object.entries(s.map).map(([a,b]) => `${a} => ${b}`).join("\n");
   $("s_prefix").value = s.prefix; $("s_scope").value = s.scope; $("s_loan").value = s.loan;
-  $("s_tol").value = s.tol; $("s_combo").value = s.combo; $("s_ilmrp").value = s.ilmrp;
+  $("s_tol").value = s.tol; $("s_combo").value = s.combo; $("s_ilmrp").value = s.ilmrp; $("s_appr").value = s.appr;
 }
 function readSettings(){
   const map = {};
@@ -217,7 +219,8 @@ function readSettings(){
     exec: $("s_exec").value.split("\n").map(x => x.trim()).filter(Boolean),
     map, prefix: $("s_prefix").value, scope: $("s_scope").value, loan: $("s_loan").value,
     tol: num($("s_tol").value) ?? 100, combo: num($("s_combo").value) ?? 0.01,
-    ilmrp: $("s_ilmrp").value.trim() || "Sale Price"
+    ilmrp: $("s_ilmrp").value.trim() || "Sale Price",
+    appr: $("s_appr").value
   };
   try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch(e) {}
   return s;
@@ -437,6 +440,7 @@ function findRule(row, rules, S){
 function runCheck(sales, rules, ilMap, S){
   const scope = S.scope.split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
   const loanW = S.loan.split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
+  const apprW = (S.appr || "").split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
   const comboInv = new Set(sales.filter(r => str(r["Brand"]).toUpperCase() === "GRIPP" && str(r["Item_Name"]).toUpperCase().includes("COMBO")).map(r => str(r["TXNName"])));
   const df = sales.filter(r => r._type === "POS" && scope.includes(str(r["Category"]).toUpperCase()));
 
@@ -467,8 +471,10 @@ function runCheck(sales, rules, ilMap, S){
     if (r._extra != null && r._extra > S.tol) res = "EXTRA DISCOUNT";
     if (!r._rule) res = "No Rule Found";
     if (r._ver === "Above Item List MRP") res = "CHECK MRP";
-    const demo = str(r["Item_Name"]).toUpperCase().includes("DEMO") || str(r["Item Code"]).toUpperCase().startsWith("3P");
+    const rmk = (str(r["Internal Remark"]) + " " + str(r["Remark"])).toUpperCase();
+    const demo = str(r["Item_Name"]).toUpperCase().includes("DEMO") || str(r["Item Code"]).toUpperCase().startsWith("3P") || rmk.includes("DEMO");
     if (demo && res === "EXTRA DISCOUNT") res = "DEMO STOCK";
+    if (res === "EXTRA DISCOUNT" && apprW.some(w => rmk.includes(w))) res = "APPROVAL IN REMARK";
     r._res = res;
   });
   return df;
@@ -493,10 +499,11 @@ function groupSumm(df, keys){
   const m = new Map();
   df.filter(r => r._rule).forEach(r => {
     const k = keys.map(f => str(f(r))).join("\u0001");
-    if (!m.has(k)) m.set(k, {keys: keys.map(f => f(r)), lines:0, qty:0, mrp:0, act:0, allow:0, xl:0, x:0});
+    if (!m.has(k)) m.set(k, {keys: keys.map(f => f(r)), lines:0, qty:0, mrp:0, act:0, allow:0, xl:0, x:0, al:0, a:0});
     const g = m.get(k);
     g.lines++; g.qty += r._qty; g.mrp += r._mrpValue; g.act += r._disc; g.allow += r._allow;
     if (r._res === "EXTRA DISCOUNT"){ g.xl++; g.x += r._extra; }
+    if (r._res === "APPROVAL IN REMARK"){ g.al++; g.a += r._extra; }
   });
   return [...m.values()].sort((a, b) => b.x - a.x);
 }
@@ -505,6 +512,7 @@ function summRows(df, spec){
     const o = {}; spec.forEach((s, i) => o[s[0]] = g.keys[i]);
     return Object.assign(o, {"Lines": g.lines, "Qty": g.qty, "MRP Value": g.mrp, "Actual Disc (Rs)": g.act,
       "Allowed Disc (Rs)": g.allow, "Extra Lines": g.xl, "Extra Disc (Rs)": g.x,
+      "Approval-in-Remark Lines": g.al, "Approval-in-Remark Disc (Rs)": g.a,
       "Actual Disc %": g.mrp ? g.act / g.mrp : null, "Extra Disc %": g.mrp ? g.x / g.mrp : null});
   });
 }
@@ -541,7 +549,9 @@ function build(){
     ["Check MRP", df.filter(r => r._res === "CHECK MRP").length],
     ["Within offer", df.filter(r => r._res === "Within Offer").length],
     ["Demo stock (kept separate)", df.filter(r => r._res === "DEMO STOCK").length],
-    ["EXTRA DISCOUNT lines", ex.length],
+    ["Extra with approval in remark (lines)", df.filter(r => r._res === "APPROVAL IN REMARK").length],
+    ["Extra with approval in remark (Rs)", Math.round(sum(df.filter(r => r._res === "APPROVAL IN REMARK"), r => r._extra))],
+    ["EXTRA DISCOUNT lines (no approval)", ex.length],
     ["MRP value (matched)", Math.round(mrpV)], ["Actual discount (matched)", Math.round(sum(matched, r => r._disc))],
     ["Allowed discount (matched)", Math.round(sum(matched, r => r._allow))], ["EXTRA DISCOUNT (Rs)", Math.round(exV)],
     ["Extra discount % of MRP", mrpV ? (exV / mrpV * 100).toFixed(2) + "%" : "0%"]
@@ -549,6 +559,7 @@ function build(){
 
   const dates = rows.map(r => r._date).filter(Boolean).sort((a, b) => a - b);
   const T = {
+    "Approval in Remark": lines.filter(r => r.Result === "APPROVAL IN REMARK").sort((a, b) => b["Extra Disc (Rs)"] - a["Extra Disc (Rs)"]),
     "Extra Discount": lines.filter(r => r.Result === "EXTRA DISCOUNT").sort((a, b) => b["Extra Disc (Rs)"] - a["Extra Disc (Rs)"]),
     "By Branch": summRows(df, [["Branch ID", r => r["Branch ID"]]]),
     "By Executive": summRows(df, [["Branch ID", r => r["Branch ID"]], ["Executive", r => r["Executive"]]]),
@@ -569,13 +580,15 @@ function build(){
 
   REPORT = {T, checkDetail, removed, kpi: {
     lines: df.length, matched: matched.length, ex: ex.length, exV, exPct: mrpV ? exV / mrpV : 0,
-    noRule: df.filter(r => r._res === "No Rule Found").length, branches: new Set(rows.map(r => r["Branch ID"])).size,
+    noRule: df.filter(r => r._res === "No Rule Found").length,
+    ap: df.filter(r => r._res === "APPROVAL IN REMARK").length,
+    apV: sum(df.filter(r => r._res === "APPROVAL IN REMARK"), r => r._extra), branches: new Set(rows.map(r => r["Branch ID"])).size,
     from: ymd(dates[0]), to: ymd(dates[dates.length-1]), act: sum(matched, r => r._disc)
   }};
 }
 
 /* ======================= RENDER ======================= */
-const TAB_ORDER = ["Extra Discount","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks","All Lines","Overview"];
+const TAB_ORDER = ["Extra Discount","Approval in Remark","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks","All Lines","Overview"];
 let curTab = "Extra Discount", sortCol = null, sortAsc = false;
 const MAX_ROWS = 1500;
 
@@ -586,11 +599,12 @@ function renderKpis(){
     ["Extra Discount Lines", inr(k.ex), `out of ${inr(k.matched)} matched lines`, "bad"],
     ["Total Discount Given", "₹ " + inr(k.act), "on matched lines", ""],
     ["Lines Checked", inr(k.lines), `${k.branches} branches · ${k.from} to ${k.to}`, ""],
+    ["Extra with Approval Remark", "₹ " + inr(k.apV), `${inr(k.ap)} lines · kept out of extra total`, ""],
     ["No Rule Found", inr(k.noRule), "add rule in master", k.noRule ? "" : "ok"]
   ].map(([l, v, s, c]) => `<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
 }
 function renderTabs(){
-  $("tabs").innerHTML = TAB_ORDER.map(t => `<button class="tab ${t === curTab ? "on" : ""}" data-t="${t}">${t}${t === "Extra Discount" ? " (" + REPORT.T[t].length + ")" : ""}</button>`).join("");
+  $("tabs").innerHTML = TAB_ORDER.map(t => `<button class="tab ${t === curTab ? "on" : ""}" data-t="${t}">${t}${["Extra Discount","Approval in Remark"].includes(t) ? " (" + REPORT.T[t].length + ")" : ""}</button>`).join("");
   $("tabs").querySelectorAll(".tab").forEach(b => b.onclick = () => { curTab = b.dataset.t; sortCol = null; $("q").value = ""; renderTabs(); renderTable(); });
 }
 const isPct = c => c.includes("%");
@@ -631,7 +645,8 @@ function renderTable(){
   const notes = {
     "Extra Discount": "Extra = actual discount on bill − allowed discount as per offer master. Round-off up to the tolerance (Settings) is ignored.",
     "By Executive": "Sorted by extra discount. Click a column header to sort.",
-    "No Rule / Check": "No Rule Found = model/MRP not in master (add a row). CHECK MRP = bill MRP higher than item list. DEMO STOCK = demo items with extra discount, kept out of the total.",
+    "No Rule / Check": "No Rule Found = model/MRP not in master (add a row). CHECK MRP = bill MRP higher than item list. DEMO STOCK = demo items (item name/code or remark says DEMO) with extra discount, kept out of the total.",
+    "Approval in Remark": "Extra discount where Internal Remark / Remark mentions an approval (words set in Settings). Kept out of the Extra total - verify the approval.",
     "Data Checks": "Sales statement checks on cleaned data. Full rows are in the Excel report."
   };
   $("tnote").textContent = notes[curTab] || "";
@@ -657,7 +672,7 @@ function toSheet(rows){
 }
 $("dlBtn").onclick = () => {
   const wb = XLSX.utils.book_new();
-  const order = ["Overview","Extra Discount","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks"];
+  const order = ["Overview","Extra Discount","Approval in Remark","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks"];
   order.forEach(n => XLSX.utils.book_append_sheet(wb, toSheet(REPORT.T[n]), n.replace("/", "-").slice(0, 31)));
   REPORT.checkDetail.forEach(([n, rows]) => XLSX.utils.book_append_sheet(wb, toSheet(rows), ("Chk - " + n).slice(0, 31)));
   if (REPORT.removed.length) XLSX.utils.book_append_sheet(wb, toSheet(REPORT.removed.map(r => ({
