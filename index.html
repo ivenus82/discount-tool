@@ -254,9 +254,27 @@ function readBook(file){
     fr.readAsArrayBuffer(file);
   });
 }
+/* some ERP exports store a wrong sheet size -> rebuild range from real cells */
+function fixRef(ws){
+  let maxR = 0, maxC = 0, any = false;
+  for (const k in ws){
+    if (k[0] === "!") continue;
+    const a = XLSX.utils.decode_cell(k); any = true;
+    if (a.r > maxR) maxR = a.r; if (a.c > maxC) maxC = a.c;
+  }
+  if (any) ws["!ref"] = XLSX.utils.encode_range({s:{r:0, c:0}, e:{r:maxR, c:maxC}});
+}
 function sheetRows(wb, name){
   const ws = wb.Sheets[name && wb.Sheets[name] ? name : wb.SheetNames[0]];
-  return XLSX.utils.sheet_to_json(ws, {defval:null, raw:true});
+  fixRef(ws);
+  // clean header names (extra spaces / line breaks)
+  return XLSX.utils.sheet_to_json(ws, {defval:null, raw:true}).map(r => {
+    const o = {}; for (const k in r) o[k.replace(/\s+/g, " ").trim()] = r[k]; return o;
+  });
+}
+function colIn(rows, want){
+  const keys = Object.keys(rows[0] || {});
+  return keys.find(k => k.toLowerCase() === want.toLowerCase()) || null;
 }
 document.querySelectorAll(".drop input").forEach(inp => {
   const box = inp.parentElement;
@@ -498,10 +516,12 @@ function build(){
   const {rows, log, chk, removed} = cleanSales(salesRaw, S);
   const rules = loadRules(files.master.wb);
   const items = sheetRows(files.items.wb);
-  if (!items.length || !("Item Code" in items[0])) throw new Error("Item List: 'Item Code' column not found.");
-  if (!(S.ilmrp in items[0])) throw new Error(`Item List: MRP column '${S.ilmrp}' not found. Change it in Settings.`);
+  const cCode = colIn(items, "Item Code"), cMrp = colIn(items, S.ilmrp);
+  const seen = Object.keys(items[0] || {}).slice(0, 25).join(", ") || "(no columns read)";
+  if (!cCode) throw new Error(`Item List: 'Item Code' column not found. Columns read: ${seen}`);
+  if (!cMrp) throw new Error(`Item List: MRP column '${S.ilmrp}' not found. Columns read: ${seen}`);
   const ilMap = new Map();
-  items.forEach(r => ilMap.set(str(r["Item Code"]).toUpperCase(), num(r[S.ilmrp])));
+  items.forEach(r => ilMap.set(str(r[cCode]).toUpperCase(), num(r[cMrp])));
 
   const df = runCheck(rows, rules, ilMap, S);
   const matched = df.filter(r => r._rule);
