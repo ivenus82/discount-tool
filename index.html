@@ -594,7 +594,9 @@ function loadRules(wb){
       venus: num(r["Venus Disc %"]) || 0, crt: num(r["CRT Disc %"]) || 0,
       loan: num(r["Loan Price (Rs)"]), lv: num(r["Loan Venus %"]), lc: num(r["Loan CRT %"]),
       combo: str(r["Freebies / Remarks"]).toUpperCase().includes("GRIPP COMBO"),
-      vfrom: toDate(r["Valid From"]), vto: toDate(r["Valid To"])
+      vfrom: toDate(r["Valid From"]), vto: toDate(r["Valid To"]),
+      freeWords: str(r["Freebie Item (name contains)"]).toUpperCase().split(",").map(x => x.trim()).filter(Boolean),
+      freeAlt: num(r["Disc % if Freebie NOT taken"])
     });
   });
   return rules;
@@ -617,6 +619,11 @@ function capOk(rc, row){
   }
   return [normCap(rc) === normCap(row["Capacity"]), 1];
 }
+let INV_ITEMS = new Map();
+function freebieOnInvoice(rule, row){
+  const names = INV_ITEMS.get(str(row["TXNName"])) || [];
+  return names.some(n => rule.freeWords.every(w => n.includes(w)));
+}
 function allowedPct(rule, row, S){
   const mrp = row._unitMrp, loan = row._pay === "Loan";
   if (rule.type === "FIXED"){
@@ -627,6 +634,8 @@ function allowedPct(rule, row, S){
   }
   let p = (loan && (rule.lv != null || rule.lc != null)) ? (rule.lv || 0) + (rule.lc || 0) : rule.venus + rule.crt;
   if (rule.combo && row._combo) p += S.combo;
+  // "freebie OR discount" offer: freebie not on the invoice -> alternative discount allowed
+  if (rule.freeWords.length && rule.freeAlt != null && !freebieOnInvoice(rule, row)) p = Math.max(p, rule.freeAlt);
   return p;
 }
 function findRule(row, rules, S){
@@ -660,6 +669,8 @@ function runCheck(sales, rules, ilMap, S){
   const scope = S.scope.split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
   const loanW = S.loan.split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
   const apprW = (S.appr || "").split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
+  INV_ITEMS = new Map();
+  sales.forEach(r => { const t = str(r["TXNName"]); if (!INV_ITEMS.has(t)) INV_ITEMS.set(t, []); INV_ITEMS.get(t).push(str(r["Item_Name"]).toUpperCase()); });
   const comboInv = new Set(sales.filter(r => str(r["Brand"]).toUpperCase() === "GRIPP" && str(r["Item_Name"]).toUpperCase().includes("COMBO")).map(r => str(r["TXNName"])));
   const df = sales.filter(r => r._type === "POS" && scope.includes(str(r["Category"]).toUpperCase()));
 
@@ -720,7 +731,8 @@ function lineRow(r){
     "Date": ymd(r._date), "Branch ID": r["Branch ID"], "Invoice": r["TXNName"], "Executive": r["Executive"],
     "Item Code": r["Item Code"], "Item Name": r["Item_Name"], "LOB": r["LOB"], "Product Family": r["Product Family"],
     "Capacity": r["Capacity"], "Color": r["Color"], "IMEI / Batch": r["Batch No"], "Pay Mode": r._pay,
-    "Affordability": r["Affordability"], "Gripp Combo": r._combo ? "Yes" : "", "Qty": r._qty,
+    "Affordability": r["Affordability"], "Gripp Combo": r._combo ? "Yes" : "",
+    "Freebie on Invoice": r._rule && r._rule.freeWords.length ? (freebieOnInvoice(r._rule, r) ? "Yes" : "No") : "", "Qty": r._qty,
     "Unit MRP": r._unitMrp, "Item List MRP": r._ilMrp, "MRP Version": r._ver, "MRP Value": r._mrpValue,
     "Actual Disc (Rs)": r._disc, "Actual Disc %": r._actPct,
     "Rule ID": r._rule ? r._rule.id : "", "Offer Rule (PDF)": r._rule ? r._rule.product : "",
