@@ -356,6 +356,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
         <label style="margin-top:10px">Categories in scope (comma)</label><input type="text" id="s_scope">
         <label style="margin-top:10px">Loan words in Affordability / Scheme (comma)</label><input type="text" id="s_loan">
         <label style="margin-top:10px">Approval words in remark (comma)</label><input type="text" id="s_appr">
+        <label style="margin-top:10px">CRT allowed only if Affordability / Scheme contains</label><input type="text" id="s_crt">
       </div>
       <div>
         <label>Ignore extra discount up to (Rs, round-off)</label><input type="number" id="s_tol">
@@ -424,7 +425,8 @@ const DEFAULTS = {
   tol: 100,
   combo: 0.01,
   ilmrp: "Sale Price",
-  appr: "APPRO, APPOV, APRROV, APROV, APP BY"
+  appr: "APPRO, APPOV, APRROV, APROV, APP BY",
+  crt: "CRT"
 };
 const LS_KEY = "discountToolSettings_v1";
 
@@ -467,7 +469,7 @@ function applySettings(s){
   $("s_exec").value = s.exec.join("\n");
   $("s_map").value = Object.entries(s.map).map(([a,b]) => `${a} => ${b}`).join("\n");
   $("s_prefix").value = s.prefix; $("s_scope").value = s.scope; $("s_loan").value = s.loan;
-  $("s_tol").value = s.tol; $("s_combo").value = s.combo; $("s_ilmrp").value = s.ilmrp; $("s_appr").value = s.appr;
+  $("s_tol").value = s.tol; $("s_combo").value = s.combo; $("s_ilmrp").value = s.ilmrp; $("s_appr").value = s.appr; $("s_crt").value = s.crt;
 }
 function readSettings(){
   const map = {};
@@ -479,7 +481,8 @@ function readSettings(){
     map, prefix: $("s_prefix").value, scope: $("s_scope").value, loan: $("s_loan").value,
     tol: num($("s_tol").value) ?? 100, combo: num($("s_combo").value) ?? 0.01,
     ilmrp: $("s_ilmrp").value.trim() || "Sale Price",
-    appr: $("s_appr").value
+    appr: $("s_appr").value,
+    crt: $("s_crt").value
   };
   try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch(e) {}
   return s;
@@ -672,7 +675,9 @@ function allowedPct(rule, row, S){
     if (price == null || !mrp) return 0;
     return Math.max(mrp - price, 0) / mrp;
   }
-  let p = (loan && (rule.lv != null || rule.lc != null)) ? (rule.lv || 0) + (rule.lc || 0) : rule.venus + rule.crt;
+  // CRT part is allowed only when the bill carries the CRT scheme (Affordability / Scheme text)
+  const crtOk = row._crt;
+  let p = (loan && (rule.lv != null || rule.lc != null)) ? (rule.lv || 0) + (crtOk ? (rule.lc || 0) : 0) : rule.venus + (crtOk ? rule.crt : 0);
   if (rule.combo && row._combo) p += S.combo;
   // "freebie OR discount" offer: freebie not on the invoice -> alternative discount allowed
   if (rule.freeWords.length && rule.freeAlt != null && !freebieOnInvoice(rule, row)) p = Math.max(p, rule.freeAlt);
@@ -708,6 +713,7 @@ function findRule(row, rules, S){
 function runCheck(sales, rules, ilMap, S){
   const scope = S.scope.split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
   const loanW = S.loan.split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
+  const crtW = (S.crt || "").split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
   const apprW = (S.appr || "").split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
   INV_ITEMS = new Map();
   sales.forEach(r => { const t = str(r["TXNName"]); if (!INV_ITEMS.has(t)) INV_ITEMS.set(t, []); INV_ITEMS.get(t).push(str(r["Item_Name"]).toUpperCase()); });
@@ -727,6 +733,7 @@ function runCheck(sales, rules, ilMap, S){
     else r._ver = "New";
     const t = (str(r["Affordability"]) + " " + str(r["Scheme"])).toUpperCase();
     r._pay = loanW.some(w => t.includes(w)) ? "Loan" : "Cash";
+    r._crt = crtW.length ? crtW.some(w => t.includes(w)) : true;
     r._combo = comboInv.has(str(r["TXNName"]));
 
     const rule = findRule(r, rules, S);
@@ -771,7 +778,7 @@ function lineRow(r){
     "Date": ymd(r._date), "Branch ID": r["Branch ID"], "Invoice": r["TXNName"], "Executive": r["Executive"],
     "Item Code": r["Item Code"], "Item Name": r["Item_Name"], "LOB": r["LOB"], "Product Family": r["Product Family"],
     "Capacity": r["Capacity"], "Color": r["Color"], "IMEI / Batch": r["Batch No"], "Pay Mode": r._pay,
-    "Affordability": r["Affordability"], "Gripp Combo": r._combo ? "Yes" : "",
+    "Affordability": r["Affordability"], "Gripp Combo": r._combo ? "Yes" : "", "CRT on Bill": r._crt ? "Yes" : "No",
     "Freebie on Invoice": r._rule && r._rule.freeWords.length ? (freebieOnInvoice(r._rule, r) ? "Yes" : "No") : "", "Qty": r._qty,
     "Unit MRP": r._unitMrp, "Item List MRP": r._ilMrp, "MRP Version": r._ver, "MRP Value": r._mrpValue,
     "Actual Disc (Rs)": r._disc, "Actual Disc %": r._actPct,
@@ -973,7 +980,7 @@ function invoiceCards(rows){
     const ir = str(r0["Internal Remark"]), rm = str(r0["Remark"]);
     return `<div class="inv ${kind}">
       <div class="invh">
-        <div class="no">${esc(v.t)}<small>${niceDate(ymd(r0._date))} · ${esc(r0["Executive"])} · ${r0._pay}</small></div>
+        <div class="no">${esc(v.t)}<small>${niceDate(ymd(r0._date))} · ${esc(r0["Executive"])} · ${r0._pay}${r0._crt ? " · CRT" : ""}</small></div>
         <div class="pr">${esc(prods)}<small>${items(v.rows.length)} flagged${v.all.length > v.rows.length ? ` · ${v.all.length} on invoice` : ""}</small></div>
         <div><div class="k">Discount given</div><div class="v">${rs(sum(v.rows, r => r._disc || 0))}</div></div>
         <div><div class="k">Allowed</div><div class="v">${rs(sum(v.rows, r => r._allow || 0))}</div></div>
