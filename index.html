@@ -3,112 +3,244 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Discount Check Tool</title>
+<title>Discount Radar</title>
+<meta name="description" content="Offer compliance check: actual discount on every bill vs discount allowed by the offer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%231d3a8a'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%2393b4ff' stroke-width='2'/%3E%3Cpath d='M16 16 L27 9' stroke='%23fff' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='22' cy='20' r='2.5' fill='%23ff6b6b'/%3E%3C/svg%3E">
 <style>
 :root{
-  --bg:#f5f6f8; --card:#ffffff; --ink:#1c2230; --muted:#667085; --line:#e4e7ec;
-  --brand:#1f3864; --brand-ink:#ffffff; --accent:#2e6be6;
-  --ok:#12805c; --ok-bg:#e7f6ef; --bad:#c4320a; --bad-bg:#fdeee8; --warn:#9a6700; --warn-bg:#fff6dd;
-  --row:#fafbfc;
+  color-scheme: light;
+  --bg:#f3f5f9; --card:#ffffff; --ink:#101828; --ink2:#344054; --muted:#667085; --line:#e4e7ec; --soft:#f8fafc;
+  --brand:#1d3a8a; --brand2:#2a5bd7; --accent:#2a78d6;
+  --leak:#e34948; --leak-bg:#fdecec; --allow:#2a78d6;
+  --good:#12805c; --good-bar:#1baf7a; --good-bg:#e7f6ef;
+  --warn:#9a5b00; --warn-bar:#eda100; --warn-bg:#fff4dc;
+  --neutral:#98a2b3; --track:#eef1f6;
+  --shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#11141a; --card:#1a1f28; --ink:#e7eaf0; --muted:#98a2b3; --line:#2b3240;
-    --brand:#2c4c86; --brand-ink:#ffffff; --accent:#6b9bff;
-    --ok:#4cc38a; --ok-bg:#163326; --bad:#ff8a65; --bad-bg:#3a1d14; --warn:#f0c14b; --warn-bg:#352c10;
-    --row:#161b23;
+    color-scheme: dark;
+    --bg:#0e1117; --card:#171b23; --ink:#eef1f6; --ink2:#c9cfda; --muted:#98a2b3; --line:#2a303b; --soft:#1c212b;
+    --brand:#1a2f6b; --brand2:#3b6be0; --accent:#3987e5;
+    --leak:#e66767; --leak-bg:#3a1c1c; --allow:#3987e5;
+    --good:#4cc38a; --good-bar:#199e70; --good-bg:#14301f;
+    --warn:#f0c14b; --warn-bar:#c98500; --warn-bg:#352a0e;
+    --neutral:#6b7485; --track:#232937;
+    --shadow:none;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#11141a; --card:#1a1f28; --ink:#e7eaf0; --muted:#98a2b3; --line:#2b3240;
-  --brand:#2c4c86; --brand-ink:#ffffff; --accent:#6b9bff;
-  --ok:#4cc38a; --ok-bg:#163326; --bad:#ff8a65; --bad-bg:#3a1d14; --warn:#f0c14b; --warn-bg:#352c10;
-  --row:#161b23;
+  color-scheme: dark;
+  --bg:#0e1117; --card:#171b23; --ink:#eef1f6; --ink2:#c9cfda; --muted:#98a2b3; --line:#2a303b; --soft:#1c212b;
+  --brand:#1a2f6b; --brand2:#3b6be0; --accent:#3987e5;
+  --leak:#e66767; --leak-bg:#3a1c1c; --allow:#3987e5;
+  --good:#4cc38a; --good-bar:#199e70; --good-bg:#14301f;
+  --warn:#f0c14b; --warn-bar:#c98500; --warn-bg:#352a0e;
+  --neutral:#6b7485; --track:#232937;
+  --shadow:none;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-header{background:var(--brand);color:var(--brand-ink);padding:18px 16px}
-header .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-header h1{margin:0;font-size:20px;font-weight:650}
-header p{margin:2px 0 0;opacity:.85;font-size:13px}
-.wrap{max-width:1280px;margin:0 auto;padding:0 16px}
-main .wrap{padding-top:18px;padding-bottom:40px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
-h2{font-size:15px;margin:0 0 12px}
-.uploads{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-.drop{border:1.5px dashed var(--line);border-radius:10px;padding:14px;cursor:pointer;position:relative;transition:border-color .15s}
-.drop:hover,.drop.over{border-color:var(--accent)}
-.drop.done{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding:0 16px}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+header{background:linear-gradient(120deg,#0f1d47 0%,#1d3a8a 60%,#2a5bd7 100%);color:#fff}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:16px;padding-bottom:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.brand svg{flex:none}
+.brand h1{margin:0;font-size:21px;font-weight:800;letter-spacing:-.02em}
+.brand p{margin:1px 0 0;font-size:12.5px;color:#c7d4f5}
+.hbtns{display:flex;gap:8px}
+.hbtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:8px;padding:7px 12px;font:600 13px Inter,sans-serif;cursor:pointer}
+.hbtn:hover{background:rgba(255,255,255,.18)}
+
+main .wrap{padding-top:18px;padding-bottom:48px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.ct{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.ct h2{font-size:15px;margin:0;font-weight:700;letter-spacing:-.01em}
+.ct span{font-size:12.5px;color:var(--muted)}
+
+/* upload */
+.uploads{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.drop{border:1.5px dashed var(--line);border-radius:12px;padding:14px 14px 12px;cursor:pointer;position:relative;display:flex;gap:12px;align-items:flex-start;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--soft)}
+.drop.done{border-style:solid;border-color:var(--good-bar);background:var(--good-bg)}
+.drop .ic{width:36px;height:36px;border-radius:9px;background:var(--soft);display:grid;place-items:center;flex:none;color:var(--brand2);font-weight:800;font-size:13px;border:1px solid var(--line)}
+.drop.done .ic{background:var(--good-bar);color:#fff;border-color:transparent}
 .drop b{display:block;font-size:14px}
-.drop small{color:var(--muted);display:block;margin-top:2px}
-.drop .st{margin-top:8px;font-size:12px;color:var(--muted);word-break:break-all}
-.drop.done .st{color:var(--ok)}
+.drop small{color:var(--muted);display:block}
+.drop .st{margin-top:4px;font-size:12px;color:var(--muted);word-break:break-all}
+.drop.done .st{color:var(--good)}
 .drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.privacy{font-size:12.5px;color:var(--muted);margin-top:10px}
+.privacy b{color:var(--ink2)}
 details{margin-top:12px}
-summary{cursor:pointer;color:var(--accent);font-weight:600}
+summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13.5px}
 .settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:12px}
 label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
-textarea,input[type=text],input[type=number],input[type=search]{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);font:13px/1.4 ui-monospace,Menlo,Consolas,monospace}
-textarea{min-height:110px;resize:vertical}
+textarea,input[type=text],input[type=number],input[type=search]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:13px/1.4 Inter,sans-serif}
+textarea{min-height:110px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
 .actions{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
-button{border:0;border-radius:7px;padding:10px 18px;font-weight:600;font-size:14px;cursor:pointer;background:var(--accent);color:#fff}
-button.sec{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+button{border:0;border-radius:9px;padding:10px 18px;font:600 14px Inter,sans-serif;cursor:pointer;background:var(--brand2);color:#fff}
+button.sec{background:transparent;color:var(--accent);border:1px solid var(--line)}
+button.sec:hover{border-color:var(--accent)}
 button:disabled{opacity:.45;cursor:not-allowed}
 #msg{font-size:13px;color:var(--muted)}
-#msg.err{color:var(--bad)}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
-.kpi .l{font-size:12px;color:var(--muted)}
-.kpi .v{font-size:22px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
-.kpi.bad .v{color:var(--bad)}
-.kpi.ok .v{color:var(--ok)}
-.kpi .s{font-size:12px;color:var(--muted);margin-top:2px}
-.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:12px}
-.tab{padding:8px 12px;border:0;background:transparent;color:var(--muted);font-weight:600;border-bottom:2px solid transparent;border-radius:0;font-size:13px}
+#msg.err{color:var(--leak)}
+.upl.compact .uploads,.upl.compact details,.upl.compact .privacy{display:none}
+.filesline{display:none;font-size:13px;color:var(--ink2)}
+.upl.compact .filesline{display:block}
+.filesline b{font-weight:600}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:16px}
+.heroL{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.heroL:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--leak)}
+.eyebrow{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.big{font-size:52px;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:8px 0 6px;color:var(--leak)}
+.heroL p{margin:0;color:var(--ink2);font-size:14.5px;max-width:560px}
+.heroL p b{color:var(--ink)}
+.period{display:inline-block;margin-top:12px;font-size:12px;color:var(--muted);background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:3px 10px}
+.minis{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mini{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)}
+.mini .l{font-size:12px;color:var(--muted);font-weight:500}
+.mini .v{font-size:24px;font-weight:750;margin-top:2px;letter-spacing:-.02em}
+.mini .s{font-size:12px;color:var(--muted)}
+.mini.warn .v{color:var(--warn)}
+.mini.good .v{color:var(--good)}
+
+/* outcome strip */
+.strip{display:flex;height:34px;border-radius:9px;overflow:hidden;gap:2px;background:var(--card)}
+.strip div{height:100%;min-width:3px;cursor:default;transition:filter .15s}
+.strip div:hover{filter:brightness(1.08)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:12px}
+.lg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
+.lg i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.lg b{color:var(--ink);font-weight:650}
+
+/* bar charts */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid2 > .card{margin-bottom:16px}
+.bars{display:flex;flex-direction:column;gap:9px}
+.br{display:grid;grid-template-columns:minmax(120px,190px) 1fr 86px;align-items:center;gap:12px;cursor:default}
+.br .lb{font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.br .lb small{display:block;color:var(--muted);font-size:11.5px;line-height:1.2}
+.br .tr{height:16px;background:var(--track);border-radius:4px;position:relative}
+.br .fl{height:100%;border-radius:0 4px 4px 0;background:var(--leak);min-width:2px}
+.br .vl{text-align:right;font-size:13px;font-weight:650}
+.br:hover .tr{outline:2px solid var(--line)}
+.empty{color:var(--muted);font-size:13px;padding:10px 0}
+
+/* dumbbell */
+.db{display:flex;flex-direction:column;gap:12px}
+.dr{display:grid;grid-template-columns:minmax(140px,220px) 1fr;gap:12px;align-items:center;cursor:default}
+.dr .lb{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dr .lb small{display:block;color:var(--muted);font-size:11.5px}
+.dtrack{position:relative;height:22px}
+.dtrack:before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--line)}
+.dline{position:absolute;top:calc(50% - 2px);height:4px;background:var(--leak-bg);border-radius:2px}
+.dot{position:absolute;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;border:2px solid var(--card)}
+.dot.a{background:var(--allow)} .dot.x{background:var(--leak)}
+.dlab{position:absolute;top:-2px;font-size:11px;color:var(--muted);transform:translateX(-50%);white-space:nowrap}
+.daxis{display:grid;grid-template-columns:minmax(140px,220px) 1fr;gap:12px;font-size:11px;color:var(--muted);margin-top:4px}
+.daxis div:last-child{display:flex;justify-content:space-between}
+
+/* columns (by day) */
+.cols{display:flex;align-items:flex-end;gap:10px;height:170px;padding-top:18px}
+.cb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;cursor:default;min-width:0}
+.cb .c{width:70%;max-width:56px;background:var(--leak);border-radius:4px 4px 0 0;min-height:2px}
+.cb .t{font-size:11.5px;color:var(--ink2);margin-bottom:4px;font-weight:600}
+.cb .d{font-size:11.5px;color:var(--muted);margin-top:6px;white-space:nowrap}
+
+/* tooltip */
+#tip{position:fixed;pointer-events:none;z-index:50;background:#101828;color:#fff;font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:320px;opacity:0;transition:opacity .08s;white-space:pre-line}
+#tip.on{opacity:1}
+
+/* tables */
+.tabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:12px}
+.tab{padding:9px 12px;border:0;background:transparent;color:var(--muted);font-weight:600;border-bottom:2px solid transparent;border-radius:0;font-size:13px}
+.tab:hover{color:var(--ink)}
 .tab.on{color:var(--accent);border-bottom-color:var(--accent)}
-.tbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap}
-.tbar input{max-width:320px}
+.tab .n{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:0 6px;font-size:11px;margin-left:4px;color:var(--ink2)}
+.tbar{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
+.tbar .l{display:flex;gap:14px;align-items:center;flex-wrap:wrap;flex:1}
+.tbar input[type=search]{max-width:320px}
+.tbar label.chk{display:flex;gap:6px;align-items:center;margin:0;font-size:12.5px;color:var(--ink2);cursor:pointer}
 .tbar span{font-size:12px;color:var(--muted)}
-.tw{overflow:auto;max-height:620px;border:1px solid var(--line);border-radius:8px}
+.tw{overflow:auto;max-height:620px;border:1px solid var(--line);border-radius:10px}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
-th,td{padding:6px 9px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
-th{position:sticky;top:0;background:var(--card);cursor:pointer;user-select:none;font-weight:650;z-index:1}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
+th{position:sticky;top:0;background:var(--soft);cursor:pointer;user-select:none;font-weight:600;color:var(--ink2);z-index:1;font-size:12px}
 th:hover{color:var(--accent)}
 td.n{text-align:right;font-variant-numeric:tabular-nums}
 td.lt{max-width:340px;overflow:hidden;text-overflow:ellipsis}
-tr:nth-child(even) td{background:var(--row)}
-.pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11.5px;font-weight:600}
-.p-bad{background:var(--bad-bg);color:var(--bad)}
-.p-ok{background:var(--ok-bg);color:var(--ok)}
+td.xx{color:var(--leak);font-weight:650}
+tbody tr:hover td{background:var(--soft)}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:650;letter-spacing:.01em}
+.p-bad{background:var(--leak-bg);color:var(--leak)}
+.p-ok{background:var(--good-bg);color:var(--good)}
 .p-warn{background:var(--warn-bg);color:var(--warn)}
-.note{font-size:12px;color:var(--muted);margin-top:8px}
-.hide{display:none}
-.steps{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
-.steps b{color:var(--ink)}
+.p-neu{background:var(--soft);color:var(--muted);border:1px solid var(--line)}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+.hide{display:none!important}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
+
+@media (max-width: 900px){
+  .hero,.grid2{grid-template-columns:1fr}
+  .big{font-size:40px}
+}
+@media (max-width: 560px){
+  .br{grid-template-columns:1fr 70px;gap:4px 8px}
+  .br .lb{grid-column:1 / -1}
+  .dr{grid-template-columns:1fr}
+  .daxis{grid-template-columns:1fr}
+  .daxis div:first-child{display:none}
+  .minis{grid-template-columns:1fr 1fr}
+  .mini .v{font-size:20px}
+}
+@media print{
+  body{background:#fff}
+  header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .hbtns,.upl,#detail,footer{display:none!important}
+  .card,.heroL,.mini{box-shadow:none;break-inside:avoid}
+  .strip div,.fl,.dot,.c,.dline,.lg i,.heroL:before{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .grid2{grid-template-columns:1fr 1fr}
+  .hero{grid-template-columns:1.35fr 1fr}
+}
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
-    <div>
-      <h1>Discount Check Tool</h1>
-      <p>Actual discount on bill vs allowed discount as per offer (Apple Hardware + Care plans)</p>
+    <div class="brand">
+      <svg width="38" height="38" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.35)"/><circle cx="16" cy="16" r="9" fill="none" stroke="#93b4ff" stroke-width="1.6"/><circle cx="16" cy="16" r="4" fill="none" stroke="#93b4ff" stroke-width="1.2" opacity=".7"/><path d="M16 16 L27 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="22" cy="20.5" r="2.4" fill="#ff6b6b"/></svg>
+      <div>
+        <h1>Discount Radar</h1>
+        <p>Offer compliance check · actual discount on every bill vs what the offer allows</p>
+      </div>
     </div>
-    <button class="sec" id="themeBtn" style="color:#fff;border-color:rgba(255,255,255,.6)">Theme</button>
+    <div class="hbtns">
+      <button class="hbtn hide" id="printBtn" type="button">Print / PDF</button>
+      <button class="hbtn" id="themeBtn" type="button">Theme</button>
+    </div>
   </div>
 </header>
 
 <main><div class="wrap">
 
-<section class="card">
-  <h2>1. Upload files</h2>
+<section class="card upl" id="upl">
+  <div class="ct"><h2>Load files</h2><span class="filesline" id="filesline"></span></div>
   <div class="uploads">
-    <div class="drop" id="d_sales"><b>Sales Statement</b><small>Raw export, e.g. Oct2026.xlsx</small><div class="st">Click or drop file</div><input type="file" accept=".xlsx,.xls,.csv" data-key="sales"></div>
-    <div class="drop" id="d_master"><b>Price &amp; Discount Master</b><small>Price_Discount_Master_Q127.xlsx</small><div class="st">Click or drop file</div><input type="file" accept=".xlsx,.xls" data-key="master"></div>
-    <div class="drop" id="d_items"><b>Item List</b><small>Item List.xlsx (Sale Price = MRP)</small><div class="st">Click or drop file</div><input type="file" accept=".xlsx,.xls,.csv" data-key="items"></div>
+    <div class="drop" id="d_sales"><div class="ic">1</div><div><b>Sales statement</b><small>Raw export from the system</small><div class="st">Click or drop .xlsx</div></div><input type="file" accept=".xlsx,.xls,.csv" data-key="sales"></div>
+    <div class="drop" id="d_master"><div class="ic">2</div><div><b>Price &amp; discount master</b><small>One row per offer rule</small><div class="st">Click or drop .xlsx</div></div><input type="file" accept=".xlsx,.xls" data-key="master"></div>
+    <div class="drop" id="d_items"><div class="ic">3</div><div><b>Item list</b><small>Current MRP per item code</small><div class="st">Click or drop .xlsx</div></div><input type="file" accept=".xlsx,.xls,.csv" data-key="items"></div>
   </div>
-  <div class="steps"><span><b>All processing runs in your browser.</b> Files are not uploaded anywhere.</span></div>
+  <div class="privacy"><b>Private by design:</b> files are read inside this browser only and never uploaded.</div>
 
   <details>
     <summary>Settings (saved in this browser)</summary>
@@ -119,12 +251,12 @@ tr:nth-child(even) td{background:var(--row)}
         <label>Keep branches starting with (comma)</label><input type="text" id="s_prefix">
         <label style="margin-top:10px">Categories in scope (comma)</label><input type="text" id="s_scope">
         <label style="margin-top:10px">Loan words in Affordability / Scheme (comma)</label><input type="text" id="s_loan">
+        <label style="margin-top:10px">Approval words in remark (comma)</label><input type="text" id="s_appr">
       </div>
       <div>
         <label>Ignore extra discount up to (Rs, round-off)</label><input type="number" id="s_tol">
         <label style="margin-top:10px">MacBook Neo extra % if Gripp combo on bill</label><input type="number" step="0.001" id="s_combo">
         <label style="margin-top:10px">Item List MRP column</label><input type="text" id="s_ilmrp">
-        <label style="margin-top:10px">Approval words in remark (comma)</label><input type="text" id="s_appr">
         <div class="actions">
           <button class="sec" id="expBtn" type="button">Export settings</button>
           <button class="sec" id="impBtn" type="button">Import settings</button>
@@ -136,23 +268,55 @@ tr:nth-child(even) td{background:var(--row)}
   </details>
 
   <div class="actions">
-    <button id="runBtn" disabled>Run Discount Check</button>
-    <button class="sec hide" id="dlBtn">Download Excel Report</button>
-    <span id="msg">Upload all 3 files to start.</span>
+    <button id="runBtn" disabled>Run check</button>
+    <button class="sec hide" id="changeBtn" type="button">Change files / settings</button>
+    <button class="sec hide" id="dlBtn">Download Excel report</button>
+    <span id="msg">Load all 3 files to start.</span>
   </div>
 </section>
 
 <section id="results" class="hide">
-  <div class="kpis" id="kpis"></div>
+  <div class="hero">
+    <div class="heroL">
+      <div class="eyebrow">Discount leakage · beyond offer, no approval</div>
+      <div class="big num" id="heroV">₹0</div>
+      <p id="heroP"></p>
+      <span class="period" id="heroD"></span>
+    </div>
+    <div class="minis" id="minis"></div>
+  </div>
+
   <div class="card">
+    <div class="ct"><h2>Where every bill landed</h2><span id="stripSub"></span></div>
+    <div class="strip" id="strip"></div>
+    <div class="legend" id="stripLg"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><div class="ct"><h2>Top branches by leakage</h2><span>extra discount, ₹</span></div><div class="bars" id="cBranch"></div></div>
+    <div class="card"><div class="ct"><h2>Offer vs bill, on leaking bills</h2><span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--allow)"></i> allowed &nbsp; <i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--leak)"></i> given</span></div><div class="db" id="cRule"></div><div class="daxis" id="cRuleAx"></div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="ct"><h2>Leakage by product line</h2><span>extra discount, ₹</span></div><div class="bars" id="cLob"></div></div>
+    <div class="card"><div class="ct"><h2>Top executives by leakage</h2><span>extra discount, ₹</span></div><div class="bars" id="cExec"></div></div>
+  </div>
+  <div class="card hide" id="dayCard"><div class="ct"><h2>Leakage by day</h2><span>extra discount, ₹</span></div><div class="cols" id="cDay"></div></div>
+
+  <div class="card" id="detail">
+    <div class="ct"><h2>Detail</h2><span>click a column header to sort</span></div>
     <div class="tabs" id="tabs"></div>
-    <div class="tbar"><input type="search" id="q" placeholder="Search in table..."><span id="cnt"></span></div>
+    <div class="tbar">
+      <div class="l"><input type="search" id="q" placeholder="Search branch, executive, invoice, item..."><label class="chk hide" id="allColsL"><input type="checkbox" id="allCols"> Show all columns</label></div>
+      <span id="cnt"></span>
+    </div>
     <div class="tw"><table id="tbl"></table></div>
     <div class="note" id="tnote"></div>
   </div>
 </section>
 
 </div></main>
+<footer>Discount Radar · runs fully in your browser</footer>
+<div id="tip"></div>
 
 <script>
 /* ======================= DEFAULT SETTINGS ======================= */
@@ -521,7 +685,7 @@ let REPORT = null;
 function build(){
   const S = readSettings();
   if (!S.exec.length && !Object.keys(S.map).length)
-    setMsg("Note: executive remove list and branch mapping are empty (open Settings).");
+    console.warn("Executive remove list and branch mapping are empty (open Settings).");
   const salesRaw = sheetRows(files.sales.wb);
   const {rows, log, chk, removed} = cleanSales(salesRaw, S);
   const rules = loadRules(files.master.wb);
@@ -578,7 +742,9 @@ function build(){
     "MRP": r._mrp, "MRP Discount": r._disc, "Total": r._total,
     "Internal Remark": r["Internal Remark"], "Remark": r["Remark"]}))]);
 
-  REPORT = {T, checkDetail, removed, kpi: {
+  REPORT = {T, df, checkDetail, removed, kpi: {
+    exBranches: new Set(ex.map(r => r["Branch ID"])).size,
+    demo: df.filter(r => r._res === "DEMO STOCK").length, chk: df.filter(r => r._res === "CHECK MRP").length,
     lines: df.length, matched: matched.length, ex: ex.length, exV, exPct: mrpV ? exV / mrpV : 0,
     noRule: df.filter(r => r._res === "No Rule Found").length,
     ap: df.filter(r => r._res === "APPROVAL IN REMARK").length,
@@ -587,39 +753,150 @@ function build(){
   }};
 }
 
-/* ======================= RENDER ======================= */
+/* ======================= DASHBOARD ======================= */
+const esc = v => String(v ?? "").replace(/[&<>"]/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[s]));
+function lakh(x){
+  if (x == null || isNaN(x)) return "₹0";
+  const a = Math.abs(x);
+  if (a >= 1e7) return "₹" + (x / 1e7).toFixed(2) + " Cr";
+  if (a >= 1e5) return "₹" + (x / 1e5).toFixed(2) + " L";
+  return "₹" + inr(x);
+}
+const rs = x => "₹" + inr(x);
+const bills = n => `${inr(n)} bill${n === 1 ? "" : "s"}`;
+const niceDate = s => { if (!s) return ""; const d = new Date(s + "T00:00:00"); return d.toLocaleDateString("en-IN", {day:"numeric", month:"short", year:"numeric"}); };
+
+function hbars(el, items, emptyMsg){
+  if (!items.length){ el.innerHTML = `<div class="empty">${emptyMsg || "No leakage found."}</div>`; return; }
+  const max = Math.max(...items.map(i => i.value)) || 1;
+  el.innerHTML = items.map(i => `<div class="br" data-tip="${esc(i.tip)}">
+      <div class="lb">${esc(i.label)}${i.sub ? `<small>${esc(i.sub)}</small>` : ""}</div>
+      <div class="tr"><div class="fl" style="width:${(i.value / max * 100).toFixed(2)}%"></div></div>
+      <div class="vl num">${lakh(i.value)}</div></div>`).join("");
+}
+
+function renderDashboard(){
+  const k = REPORT.kpi, df = REPORT.df;
+  const period = k.from === k.to ? niceDate(k.from) : `${niceDate(k.from)} – ${niceDate(k.to)}`;
+
+  // hero
+  $("heroV").textContent = rs(k.exV);
+  $("heroP").innerHTML = `<b>${bills(k.ex)}</b> got more discount than the offer allowed, without any approval noted. That is <b>${(k.exPct * 100).toFixed(2)}%</b> of the MRP value checked, across <b>${k.exBranches}</b> of ${k.branches} branches.`;
+  $("heroD").textContent = `${period} · ${inr(k.lines)} bills checked`;
+  const within = df.filter(r => r._res === "Within Offer").length;
+  $("minis").innerHTML = [
+    ["Within offer", ((within / (k.matched || 1)) * 100).toFixed(1) + "%", `${inr(within)} of ${inr(k.matched)} bills`, "good"],
+    ["Total discount given", lakh(k.act), "on bills matched to an offer", ""],
+    ["Approval noted in remark", lakh(k.apV), `${bills(k.ap)} · verify, not in leakage`, "warn"],
+    ["Needs attention", inr(k.noRule + k.demo + k.chk), `${k.noRule} no rule · ${k.demo} demo · ${k.chk} MRP check`, ""]
+  ].map(([l, v, s, c]) => `<div class="mini ${c}"><div class="l">${l}</div><div class="v num">${v}</div><div class="s">${s}</div></div>`).join("");
+
+  // outcome strip
+  const segs = [
+    ["Within offer", "Within Offer", "var(--good-bar)"],
+    ["Leakage", "EXTRA DISCOUNT", "var(--leak)"],
+    ["Approval in remark", "APPROVAL IN REMARK", "var(--warn-bar)"],
+    ["Demo / no rule / MRP check", null, "var(--neutral)"]
+  ].map(([label, res, color]) => {
+    const n = res ? df.filter(r => r._res === res).length : df.filter(r => ["DEMO STOCK","No Rule Found","CHECK MRP"].includes(r._res)).length;
+    const v = res ? sum(df.filter(r => r._res === res), r => r._extra > 0 && res !== "Within Offer" ? r._extra : 0) : 0;
+    return {label, n, color, v};
+  });
+  const tot = df.length || 1;
+  $("stripSub").textContent = `${inr(df.length)} bills · Apple hardware + care plans`;
+  $("strip").innerHTML = segs.filter(s => s.n).map(s => `<div style="flex:${s.n};background:${s.color}" data-tip="${esc(`${s.label}\n${inr(s.n)} bills (${(s.n / tot * 100).toFixed(1)}%)${s.v ? "\nExtra discount: " + rs(s.v) : ""}`)}"></div>`).join("");
+  $("stripLg").innerHTML = segs.map(s => `<div class="lg"><i style="background:${s.color}"></i>${s.label} <b class="num">${inr(s.n)}</b> <span>(${(s.n / tot * 100).toFixed(1)}%)</span></div>`).join("");
+
+  // charts
+  const T = REPORT.T;
+  hbars($("cBranch"), T["By Branch"].filter(r => r["Extra Disc (Rs)"] > 0).slice(0, 10).map(r => ({
+    label: r["Branch ID"], value: r["Extra Disc (Rs)"],
+    tip: `${r["Branch ID"]}\nLeakage: ${rs(r["Extra Disc (Rs)"])} on ${bills(r["Extra Lines"])}\nBills checked: ${inr(r["Lines"])}\nDiscount given: ${rs(r["Actual Disc (Rs)"])}`
+  })));
+  hbars($("cLob"), T["By Model"].reduce((m, r) => { const k2 = r.LOB || "Other"; const g = m.find(x => x.label === k2) || (m.push({label: k2, value: 0, n: 0}), m[m.length - 1]); g.value += r["Extra Disc (Rs)"]; g.n += r["Extra Lines"]; return m; }, [])
+    .filter(g => g.value > 0).sort((a, b) => b.value - a.value).slice(0, 10)
+    .map(g => ({...g, tip: `${g.label}\nLeakage: ${rs(g.value)} on ${bills(g.n)}`})));
+  hbars($("cExec"), T["By Executive"].filter(r => r["Extra Disc (Rs)"] > 0).slice(0, 10).map(r => ({
+    label: r["Executive"], sub: r["Branch ID"], value: r["Extra Disc (Rs)"],
+    tip: `${r["Executive"]} · ${r["Branch ID"]}\nLeakage: ${rs(r["Extra Disc (Rs)"])} on ${bills(r["Extra Lines"])}\nBills: ${inr(r["Lines"])}`
+  })));
+
+  // dumbbell: per offer rule, on leaking bills only
+  const ex = df.filter(r => r._res === "EXTRA DISCOUNT");
+  const byRule = new Map();
+  ex.forEach(r => {
+    const g = byRule.get(r._rule.id) || {name: r._rule.product, n: 0, mrp: 0, act: 0, allow: 0, x: 0};
+    g.n++; g.mrp += r._mrpValue; g.act += r._disc; g.allow += r._allow; g.x += r._extra; byRule.set(r._rule.id, g);
+  });
+  const rows = [...byRule.values()].sort((a, b) => b.x - a.x).slice(0, 8)
+    .map(g => ({...g, ap: g.allow / g.mrp, gp: g.act / g.mrp}));
+  if (!rows.length){ $("cRule").innerHTML = `<div class="empty">No leakage found.</div>`; $("cRuleAx").innerHTML = ""; }
+  else {
+    const mx = Math.max(...rows.map(r => Math.max(r.ap, r.gp))) * 1.08 || 0.01;
+    const P = v => (v / mx * 100).toFixed(2) + "%";
+    $("cRule").innerHTML = rows.map(r => `<div class="dr" data-tip="${esc(`${r.name}\nAllowed: ${(r.ap * 100).toFixed(1)}% · Given: ${(r.gp * 100).toFixed(1)}%\nLeakage: ${rs(r.x)} on ${bills(r.n)}`)}">
+        <div class="lb">${esc(r.name)}<small>${bills(r.n)} · ${lakh(r.x)} extra</small></div>
+        <div class="dtrack"><div class="dline" style="left:${P(Math.min(r.ap, r.gp))};width:calc(${P(Math.abs(r.gp - r.ap))})"></div>
+          <div class="dot a" style="left:${P(r.ap)}"></div><div class="dot x" style="left:${P(r.gp)}"></div></div></div>`).join("");
+    $("cRuleAx").innerHTML = `<div></div><div><span>0%</span><span>${(mx * 50).toFixed(1)}%</span><span>${(mx * 100).toFixed(1)}% of MRP</span></div>`;
+  }
+
+  // by day (only if more than one day)
+  const days = T["By Date"];
+  $("dayCard").classList.toggle("hide", days.length < 2);
+  if (days.length > 1){
+    const mx = Math.max(...days.map(d => d["Extra Disc (Rs)"])) || 1;
+    $("cDay").innerHTML = days.map(d => `<div class="cb" data-tip="${esc(`${niceDate(d.Date)}\nLeakage: ${rs(d["Extra Disc (Rs)"])} on ${d["Extra Lines"]} bills\nBills checked: ${inr(d.Lines)}`)}">
+      <div class="t num">${lakh(d["Extra Disc (Rs)"])}</div><div class="c" style="height:${(d["Extra Disc (Rs)"] / mx * 100).toFixed(1)}%"></div>
+      <div class="d">${new Date(d.Date + "T00:00:00").toLocaleDateString("en-IN", {day:"numeric", month:"short"})}</div></div>`).join("");
+  }
+}
+
+/* tooltip */
+(() => {
+  const tip = $("tip");
+  document.addEventListener("mousemove", e => {
+    const t = e.target.closest("[data-tip]");
+    if (!t){ tip.classList.remove("on"); return; }
+    tip.textContent = t.dataset.tip; tip.classList.add("on");
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    let x = e.clientX + 14, y = e.clientY + 14;
+    if (x + w > innerWidth - 8) x = e.clientX - w - 14;
+    if (y + h > innerHeight - 8) y = e.clientY - h - 14;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  });
+})();
+
+/* ======================= DETAIL TABLES ======================= */
 const TAB_ORDER = ["Extra Discount","Approval in Remark","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks","All Lines","Overview"];
+const TAB_LABEL = {"Extra Discount": "Leakage bills", "Approval in Remark": "Approval in remark", "No Rule / Check": "No rule / check"};
+const LINE_TABS = ["Extra Discount","Approval in Remark","No Rule / Check","All Lines"];
+const KEY_COLS = ["Date","Branch ID","Invoice","Executive","Item Name","Pay Mode","Unit MRP","Actual Disc (Rs)","Allowed Disc (Rs)","Extra Disc (Rs)","Extra Disc %","Offer Rule (PDF)","Result","Internal Remark"];
 let curTab = "Extra Discount", sortCol = null, sortAsc = false;
 const MAX_ROWS = 1500;
-
-function renderKpis(){
-  const k = REPORT.kpi;
-  $("kpis").innerHTML = [
-    ["Extra Discount (Rs)", "₹ " + inr(k.exV), `${(k.exPct*100).toFixed(2)}% of MRP value`, "bad"],
-    ["Extra Discount Lines", inr(k.ex), `out of ${inr(k.matched)} matched lines`, "bad"],
-    ["Total Discount Given", "₹ " + inr(k.act), "on matched lines", ""],
-    ["Lines Checked", inr(k.lines), `${k.branches} branches · ${k.from} to ${k.to}`, ""],
-    ["Extra with Approval Remark", "₹ " + inr(k.apV), `${inr(k.ap)} lines · kept out of extra total`, ""],
-    ["No Rule Found", inr(k.noRule), "add rule in master", k.noRule ? "" : "ok"]
-  ].map(([l, v, s, c]) => `<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
-}
-function renderTabs(){
-  $("tabs").innerHTML = TAB_ORDER.map(t => `<button class="tab ${t === curTab ? "on" : ""}" data-t="${t}">${t}${["Extra Discount","Approval in Remark"].includes(t) ? " (" + REPORT.T[t].length + ")" : ""}</button>`).join("");
-  $("tabs").querySelectorAll(".tab").forEach(b => b.onclick = () => { curTab = b.dataset.t; sortCol = null; $("q").value = ""; renderTabs(); renderTable(); });
-}
 const isPct = c => c.includes("%");
 const isMoney = c => /(Rs\)|MRP|Value|Total)/.test(c) && !isPct(c) && c !== "MRP Version";
+const RES_LABEL = {"EXTRA DISCOUNT": "Leakage", "APPROVAL IN REMARK": "Approval noted", "Within Offer": "Within offer", "No Rule Found": "No rule", "CHECK MRP": "Check MRP", "DEMO STOCK": "Demo stock", "REVIEW": "Review", "OK": "OK"};
+
+function renderTabs(){
+  $("tabs").innerHTML = TAB_ORDER.map(t => {
+    const n = LINE_TABS.includes(t) && t !== "All Lines" ? `<span class="n">${REPORT.T[t].length}</span>` : "";
+    return `<button class="tab ${t === curTab ? "on" : ""}" data-t="${t}">${TAB_LABEL[t] || t}${n}</button>`;
+  }).join("");
+  $("tabs").querySelectorAll(".tab").forEach(b => b.onclick = () => { curTab = b.dataset.t; sortCol = null; $("q").value = ""; renderTabs(); renderTable(); });
+}
 function cell(c, v){
   if (v == null || v === "") return `<td></td>`;
   if (c === "Result"){
-    const cls = v === "EXTRA DISCOUNT" || v === "REVIEW" ? "p-bad" : (v === "Within Offer" || v === "OK" ? "p-ok" : "p-warn");
-    return `<td><span class="pill ${cls}">${v}</span></td>`;
+    const cls = v === "EXTRA DISCOUNT" || v === "REVIEW" ? "p-bad" : v === "Within Offer" || v === "OK" ? "p-ok" : v === "APPROVAL IN REMARK" ? "p-warn" : "p-neu";
+    return `<td><span class="pill ${cls}">${RES_LABEL[v] || esc(v)}</span></td>`;
   }
   if (typeof v === "number"){
-    if (isPct(c)) return `<td class="n">${pct(v)}</td>`;
-    return `<td class="n">${isMoney(c) || Math.abs(v) >= 1000 ? inr(v) : (Number.isInteger(v) ? v : v.toFixed(2))}</td>`;
+    const x = c === "Extra Disc (Rs)" && v > 0 ? " xx" : "";
+    if (isPct(c)) return `<td class="n${x}">${pct(v)}</td>`;
+    return `<td class="n${x}">${isMoney(c) || Math.abs(v) >= 1000 ? inr(v) : (Number.isInteger(v) ? v : v.toFixed(2))}</td>`;
   }
-  const t = String(v).replace(/[&<>"]/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[s]));
+  const t = esc(v);
   return t.length > 45 ? `<td class="lt" title="${t}">${t}</td>` : `<td>${t}</td>`;
 }
 function renderTable(){
@@ -634,25 +911,29 @@ function renderTable(){
       return sortAsc ? r : -r;
     });
   }
-  const cols = data.length ? Object.keys(data[0]) : Object.keys((REPORT.T[curTab] || [{}])[0] || {});
+  const isLine = LINE_TABS.includes(curTab);
+  $("allColsL").classList.toggle("hide", !isLine);
+  let cols = data.length ? Object.keys(data[0]) : Object.keys((REPORT.T[curTab] || [{}])[0] || {});
+  if (isLine && !$("allCols").checked) cols = KEY_COLS.filter(c => cols.includes(c));
   const shown = data.slice(0, MAX_ROWS);
-  $("tbl").innerHTML = `<thead><tr>${cols.map(c => `<th data-c="${c}">${c}${sortCol === c ? (sortAsc ? " ▲" : " ▼") : ""}</th>`).join("")}</tr></thead>` +
+  $("tbl").innerHTML = `<thead><tr>${cols.map(c => `<th data-c="${esc(c)}">${esc(c)}${sortCol === c ? (sortAsc ? " ▲" : " ▼") : ""}</th>`).join("")}</tr></thead>` +
     `<tbody>${shown.map(r => `<tr>${cols.map(c => cell(c, r[c])).join("")}</tr>`).join("")}</tbody>`;
   $("tbl").querySelectorAll("th").forEach(th => th.onclick = () => {
     const c = th.dataset.c; if (sortCol === c) sortAsc = !sortAsc; else { sortCol = c; sortAsc = false; } renderTable();
   });
-  $("cnt").textContent = `${inr(data.length)} rows` + (data.length > MAX_ROWS ? ` (showing first ${MAX_ROWS}, full data in Excel)` : "");
+  $("cnt").textContent = `${inr(data.length)} rows` + (data.length > MAX_ROWS ? ` · showing first ${MAX_ROWS}, all rows in Excel` : "");
   const notes = {
-    "Extra Discount": "Extra = actual discount on bill − allowed discount as per offer master. Round-off up to the tolerance (Settings) is ignored.",
-    "By Executive": "Sorted by extra discount. Click a column header to sort.",
-    "No Rule / Check": "No Rule Found = model/MRP not in master (add a row). CHECK MRP = bill MRP higher than item list. DEMO STOCK = demo items (item name/code or remark says DEMO) with extra discount, kept out of the total.",
-    "Approval in Remark": "Extra discount where Internal Remark / Remark mentions an approval (words set in Settings). Kept out of the Extra total - verify the approval.",
+    "Extra Discount": "Leakage = discount on bill − discount allowed by the offer master. Round-off up to the tolerance in Settings is ignored.",
+    "No Rule / Check": "No rule = model / MRP not in the master (add a row). Check MRP = bill MRP higher than item list. Demo stock = demo items (item name/code or remark says DEMO), kept out of leakage.",
+    "Approval in Remark": "Extra discount where Internal Remark / Remark mentions an approval (words set in Settings). Kept out of leakage – verify the approval.",
     "Data Checks": "Sales statement checks on cleaned data. Full rows are in the Excel report."
   };
   $("tnote").textContent = notes[curTab] || "";
 }
 $("q").addEventListener("input", renderTable);
+$("allCols").addEventListener("change", renderTable);
 
+/* ======================= EXCEL EXPORT ======================= */
 /* ======================= EXCEL EXPORT ======================= */
 function toSheet(rows){
   const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{"Info":"No rows"}]);
@@ -673,34 +954,43 @@ function toSheet(rows){
 $("dlBtn").onclick = () => {
   const wb = XLSX.utils.book_new();
   const order = ["Overview","Extra Discount","Approval in Remark","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks"];
-  order.forEach(n => XLSX.utils.book_append_sheet(wb, toSheet(REPORT.T[n]), n.replace("/", "-").slice(0, 31)));
+  order.forEach(n => XLSX.utils.book_append_sheet(wb, toSheet(REPORT.T[n]), (TAB_LABEL[n] || n).replace("/", "-").slice(0, 31)));
   REPORT.checkDetail.forEach(([n, rows]) => XLSX.utils.book_append_sheet(wb, toSheet(rows), ("Chk - " + n).slice(0, 31)));
   if (REPORT.removed.length) XLSX.utils.book_append_sheet(wb, toSheet(REPORT.removed.map(r => ({
     "Removed Reason": r["Removed Reason"], "Date": r["TXNDate"], "Branch ID": r["Original Branch ID"] || r["Branch ID"],
     "Invoice": r["TXNName"], "Executive": r["Executive"], "Item Name": r["Item_Name"], "Total": num(r["Total"]),
     "Internal Remark": r["Internal Remark"]}))), "Removed Rows");
   XLSX.utils.book_append_sheet(wb, toSheet(REPORT.T["All Lines"]), "All Lines");
-  XLSX.writeFile(wb, `Discount_Check_${REPORT.kpi.from}_to_${REPORT.kpi.to}.xlsx`);
+  const k = REPORT.kpi;
+  XLSX.writeFile(wb, `Discount_Radar_${k.from}${k.to !== k.from ? "_to_" + k.to : ""}.xlsx`);
 };
 
 /* ======================= RUN ======================= */
+function filesSummary(){
+  return ["sales","master","items"].map(k => files[k] ? `<b>${esc(files[k].name)}</b>` : "").filter(Boolean).join(" · ");
+}
 $("runBtn").onclick = () => {
-  setMsg("Processing ... please wait");
+  setMsg("Checking every bill ...");
   $("runBtn").disabled = true;
   setTimeout(() => {
     try {
       const t0 = performance.now();
       build();
       curTab = "Extra Discount"; sortCol = null;
-      renderKpis(); renderTabs(); renderTable();
-      $("results").classList.remove("hide"); $("dlBtn").classList.remove("hide");
+      renderDashboard(); renderTabs(); renderTable();
+      $("results").classList.remove("hide");
+      ["dlBtn","changeBtn","printBtn"].forEach(id => $(id).classList.remove("hide"));
+      $("upl").classList.add("compact"); $("filesline").innerHTML = filesSummary();
       setMsg(`Done in ${((performance.now() - t0) / 1000).toFixed(1)} s.`);
+      $("results").scrollIntoView({behavior: "smooth", block: "start"});
     } catch(e){
       console.error(e); setMsg("Error: " + e.message, true);
     }
     $("runBtn").disabled = false;
   }, 30);
 };
+$("changeBtn").onclick = () => { $("upl").classList.toggle("compact"); };
+$("printBtn").onclick = () => window.print();
 
 loadSettings();
 </script>

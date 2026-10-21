@@ -1,6 +1,6 @@
-# Discount Check Tool
+# Discount Radar
 
-Browser tool that compares the **actual discount on each bill** with the **allowed discount as per the offer** (Apple Hardware + Care plans).
+Browser tool (Discount Radar) that compares the **actual discount on each bill** with the **allowed discount as per the offer** (Apple Hardware + Care plans).
 
 All processing runs **inside the browser**. Files are never uploaded to any server.
 
