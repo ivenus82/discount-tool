@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discount Check Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --ink:#1c2230; --muted:#667085; --line:#e4e7ec;
+  --brand:#1f3864; --brand-ink:#ffffff; --accent:#2e6be6;
+  --ok:#12805c; --ok-bg:#e7f6ef; --bad:#c4320a; --bad-bg:#fdeee8; --warn:#9a6700; --warn-bg:#fff6dd;
+  --row:#fafbfc;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11141a; --card:#1a1f28; --ink:#e7eaf0; --muted:#98a2b3; --line:#2b3240;
+    --brand:#2c4c86; --brand-ink:#ffffff; --accent:#6b9bff;
+    --ok:#4cc38a; --ok-bg:#163326; --bad:#ff8a65; --bad-bg:#3a1d14; --warn:#f0c14b; --warn-bg:#352c10;
+    --row:#161b23;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11141a; --card:#1a1f28; --ink:#e7eaf0; --muted:#98a2b3; --line:#2b3240;
+  --brand:#2c4c86; --brand-ink:#ffffff; --accent:#6b9bff;
+  --ok:#4cc38a; --ok-bg:#163326; --bad:#ff8a65; --bad-bg:#3a1d14; --warn:#f0c14b; --warn-bg:#352c10;
+  --row:#161b23;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+header{background:var(--brand);color:var(--brand-ink);padding:18px 16px}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-size:20px;font-weight:650}
+header p{margin:2px 0 0;opacity:.85;font-size:13px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 16px}
+main .wrap{padding-top:18px;padding-bottom:40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+h2{font-size:15px;margin:0 0 12px}
+.uploads{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:14px;cursor:pointer;position:relative;transition:border-color .15s}
+.drop:hover,.drop.over{border-color:var(--accent)}
+.drop.done{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
+.drop b{display:block;font-size:14px}
+.drop small{color:var(--muted);display:block;margin-top:2px}
+.drop .st{margin-top:8px;font-size:12px;color:var(--muted);word-break:break-all}
+.drop.done .st{color:var(--ok)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--accent);font-weight:600}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:12px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+textarea,input[type=text],input[type=number],input[type=search]{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);font:13px/1.4 ui-monospace,Menlo,Consolas,monospace}
+textarea{min-height:110px;resize:vertical}
+.actions{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+button{border:0;border-radius:7px;padding:10px 18px;font-weight:600;font-size:14px;cursor:pointer;background:var(--accent);color:#fff}
+button.sec{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+button:disabled{opacity:.45;cursor:not-allowed}
+#msg{font-size:13px;color:var(--muted)}
+#msg.err{color:var(--bad)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-size:22px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi.bad .v{color:var(--bad)}
+.kpi.ok .v{color:var(--ok)}
+.kpi .s{font-size:12px;color:var(--muted);margin-top:2px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:12px}
+.tab{padding:8px 12px;border:0;background:transparent;color:var(--muted);font-weight:600;border-bottom:2px solid transparent;border-radius:0;font-size:13px}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
+.tbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap}
+.tbar input{max-width:320px}
+.tbar span{font-size:12px;color:var(--muted)}
+.tw{overflow:auto;max-height:620px;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:6px 9px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
+th{position:sticky;top:0;background:var(--card);cursor:pointer;user-select:none;font-weight:650;z-index:1}
+th:hover{color:var(--accent)}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+tr:nth-child(even) td{background:var(--row)}
+.pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11.5px;font-weight:600}
+.p-bad{background:var(--bad-bg);color:var(--bad)}
+.p-ok{background:var(--ok-bg);color:var(--ok)}
+.p-warn{background:var(--warn-bg);color:var(--warn)}
+.note{font-size:12px;color:var(--muted);margin-top:8px}
+.hide{display:none}
+.steps{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
+.steps b{color:var(--ink)}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div>
+      <h1>Discount Check Tool</h1>
+      <p>Actual discount on bill vs allowed discount as per offer (Apple Hardware + Care plans)</p>
+    </div>
+    <button class="sec" id="themeBtn" style="color:#fff;border-color:rgba(255,255,255,.6)">Theme</button>
+  </div>
+</header>
+
+<main><div class="wrap">
+
+<section class="card">
+  <h2>1. Upload files</h2>
+  <div class="uploads">
+    <div class="drop" id="d_sales"><b>Sales Statement</b><small>Raw export, e.g. Oct2026.xlsx</small><div class="st">Click or drop file</div><input type="file" accept=".xlsx,.xls,.csv" data-key="sales"></div>
+    <div class="drop" id="d_master"><b>Price &amp; Discount Master</b><small>Price_Discount_Master_Q127.xlsx</small><div class="st">Click or drop file</div><input type="file" accept=".xlsx,.xls" data-key="master"></div>
+    <div class="drop" id="d_items"><b>Item List</b><small>Item List.xlsx (Sale Price = MRP)</small><div class="st">Click or drop file</div><input type="file" accept=".xlsx,.xls,.csv" data-key="items"></div>
+  </div>
+  <div class="steps"><span><b>All processing runs in your browser.</b> Files are not uploaded anywhere.</span></div>
+
+  <details>
+    <summary>Settings (saved in this browser)</summary>
+    <div class="settings">
+      <div><label>Executives to remove (one per line)</label><textarea id="s_exec" placeholder="One name per line"></textarea></div>
+      <div><label>Branch mapping (Sub branch =&gt; Main branch)</label><textarea id="s_map" placeholder="Outbound@XYZ => APR@ABC"></textarea></div>
+      <div>
+        <label>Keep branches starting with (comma)</label><input type="text" id="s_prefix">
+        <label style="margin-top:10px">Categories in scope (comma)</label><input type="text" id="s_scope">
+        <label style="margin-top:10px">Loan words in Affordability / Scheme (comma)</label><input type="text" id="s_loan">
+      </div>
+      <div>
+        <label>Ignore extra discount up to (Rs, round-off)</label><input type="number" id="s_tol">
+        <label style="margin-top:10px">MacBook Neo extra % if Gripp combo on bill</label><input type="number" step="0.001" id="s_combo">
+        <label style="margin-top:10px">Item List MRP column</label><input type="text" id="s_ilmrp">
+        <div class="actions">
+          <button class="sec" id="expBtn" type="button">Export settings</button>
+          <button class="sec" id="impBtn" type="button">Import settings</button>
+          <button class="sec" id="resetBtn" type="button">Reset</button>
+          <input type="file" id="impFile" accept=".json" class="hide">
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="actions">
+    <button id="runBtn" disabled>Run Discount Check</button>
+    <button class="sec hide" id="dlBtn">Download Excel Report</button>
+    <span id="msg">Upload all 3 files to start.</span>
+  </div>
+</section>
+
+<section id="results" class="hide">
+  <div class="kpis" id="kpis"></div>
+  <div class="card">
+    <div class="tabs" id="tabs"></div>
+    <div class="tbar"><input type="search" id="q" placeholder="Search in table..."><span id="cnt"></span></div>
+    <div class="tw"><table id="tbl"></table></div>
+    <div class="note" id="tnote"></div>
+  </div>
+</section>
+
+</div></main>
+
+<script>
+/* ======================= DEFAULT SETTINGS ======================= */
+const DEFAULTS = {
+  exec: [],          // fill in Settings (kept in your browser, not in this file)
+  map: {},           // e.g.  Outbound@XYZ => APR@ABC
+  prefix: "AAR, APP, APR",
+  scope: "APPLE HARDWARE, CARE PLANS",
+  loan: "FIN, CREDIT, EMI, LOAN",
+  tol: 100,
+  combo: 0.01,
+  ilmrp: "Sale Price"
+};
+const LS_KEY = "discountToolSettings_v1";
+
+/* ======================= HELPERS ======================= */
+const $ = id => document.getElementById(id);
+const str = v => v == null ? "" : String(v).trim();
+function num(v){
+  if (v == null || v === "") return null;
+  if (typeof v === "number") return isFinite(v) ? v : null;
+  const n = parseFloat(String(v).replace(/[₹,\s]/g, ""));
+  return isNaN(n) ? null : n;
+}
+const norm = v => str(v).toUpperCase().replace(/\//g, " ").replace(/\s+/g, " ").trim();
+const normCap = v => norm(v).replace(/ /g, "");
+function toDate(v){
+  if (v == null || v === "") return null;
+  if (typeof v === "number"){ const d = XLSX.SSF.parse_date_code(v); return d ? new Date(d.y, d.m-1, d.d) : null; }
+  if (v instanceof Date) return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  const s = str(v);
+  let m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
+  if (m) return new Date(+m[3], +m[2]-1, +m[1]);
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  return null;
+}
+const ymd = d => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` : "";
+const r0 = x => x == null ? null : Math.round(x);
+const inr = x => x == null || isNaN(x) ? "" : Math.round(x).toLocaleString("en-IN");
+const pct = x => x == null || isNaN(x) ? "" : (x*100).toFixed(2) + "%";
+const sum = (a, f) => a.reduce((s, r) => s + (f(r) || 0), 0);
+
+/* ======================= SETTINGS UI ======================= */
+function loadSettings(){
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(LS_KEY)); } catch(e) {}
+  applySettings(s);
+}
+function applySettings(s){
+  s = Object.assign({}, DEFAULTS, s || {});
+  $("s_exec").value = s.exec.join("\n");
+  $("s_map").value = Object.entries(s.map).map(([a,b]) => `${a} => ${b}`).join("\n");
+  $("s_prefix").value = s.prefix; $("s_scope").value = s.scope; $("s_loan").value = s.loan;
+  $("s_tol").value = s.tol; $("s_combo").value = s.combo; $("s_ilmrp").value = s.ilmrp;
+}
+function readSettings(){
+  const map = {};
+  $("s_map").value.split("\n").forEach(l => {
+    const p = l.split("=>"); if (p.length === 2 && p[0].trim()) map[p[0].trim()] = p[1].trim();
+  });
+  const s = {
+    exec: $("s_exec").value.split("\n").map(x => x.trim()).filter(Boolean),
+    map, prefix: $("s_prefix").value, scope: $("s_scope").value, loan: $("s_loan").value,
+    tol: num($("s_tol").value) ?? 100, combo: num($("s_combo").value) ?? 0.01,
+    ilmrp: $("s_ilmrp").value.trim() || "Sale Price"
+  };
+  try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch(e) {}
+  return s;
+}
+$("expBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(readSettings(), null, 2)], {type: "application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "discount_tool_settings.json"; a.click();
+};
+$("impBtn").onclick = () => $("impFile").click();
+$("impFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const s = JSON.parse(await f.text());
+    try { localStorage.setItem(LS_KEY, JSON.stringify(Object.assign({}, DEFAULTS, s))); } catch(err) {}
+    loadSettings(); applySettings(s); setMsg("Settings imported.");
+  } catch(err){ setMsg("Settings file not valid: " + err.message, true); }
+  e.target.value = "";
+};
+$("resetBtn").onclick = () => { try { localStorage.removeItem(LS_KEY); } catch(e) {} loadSettings(); };
+
+/* theme toggle */
+$("themeBtn").onclick = () => {
+  const r = document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = dark ? "light" : "dark";
+};
+
+/* ======================= FILE LOADING ======================= */
+const files = {};
+function readBook(file){
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = e => { try { res(XLSX.read(new Uint8Array(e.target.result), {type:"array"})); } catch(err){ rej(err); } };
+    fr.onerror = rej;
+    fr.readAsArrayBuffer(file);
+  });
+}
+function sheetRows(wb, name){
+  const ws = wb.Sheets[name && wb.Sheets[name] ? name : wb.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(ws, {defval:null, raw:true});
+}
+document.querySelectorAll(".drop input").forEach(inp => {
+  const box = inp.parentElement;
+  ["dragenter","dragover"].forEach(ev => box.addEventListener(ev, () => box.classList.add("over")));
+  ["dragleave","drop"].forEach(ev => box.addEventListener(ev, () => box.classList.remove("over")));
+  inp.addEventListener("change", async () => {
+    const f = inp.files[0]; if (!f) return;
+    const st = box.querySelector(".st");
+    st.textContent = "Reading " + f.name + " ...";
+    try {
+      const wb = await readBook(f);
+      files[inp.dataset.key] = {name: f.name, wb};
+      box.classList.add("done");
+      st.textContent = "✓ " + f.name;
+    } catch(e){
+      box.classList.remove("done"); delete files[inp.dataset.key];
+      st.textContent = "Could not read file: " + e.message;
+    }
+    $("runBtn").disabled = !(files.sales && files.master && files.items);
+    if (!$("runBtn").disabled) setMsg("Ready. Click Run.");
+  });
+});
+function setMsg(t, err){ $("msg").textContent = t; $("msg").className = err ? "err" : ""; }
+
+/* ======================= STEP 1: CLEAN SALES ======================= */
+function cleanSales(raw, S){
+  const log = {rowsInFile: raw.length};
+  let rows = raw.filter(r => !(str(r["TXNName"]).toLowerCase().includes("count") || !str(r["Month"])));
+  log.footer = raw.length - rows.length;
+  const need = ["Branch ID","TXNName","Transaction Type","Item Code","Item_Name","MRP","MRP Discount","Invoice Quantity","Total"];
+  const miss = need.filter(c => !(c in (raw[0] || {})));
+  if (miss.length) throw new Error("Sales file: columns not found -> " + miss.join(", "));
+
+  const ex = new Set(S.exec.map(x => x.toUpperCase()));
+  const removedExec = rows.filter(r => ex.has(str(r["Executive"]).toUpperCase()));
+  rows = rows.filter(r => !ex.has(str(r["Executive"]).toUpperCase()));
+
+  let mapped = 0;
+  rows.forEach(r => {
+    r["Original Branch ID"] = r["Branch ID"];
+    const m = S.map[str(r["Branch ID"])];
+    if (m){ r["Branch ID"] = m; mapped++; }
+  });
+  const pre = S.prefix.split(",").map(x => x.trim()).filter(Boolean);
+  const removedBranch = rows.filter(r => !pre.some(p => str(r["Branch ID"]).startsWith(p)));
+  rows = rows.filter(r => pre.some(p => str(r["Branch ID"]).startsWith(p)));
+
+  rows.forEach(r => {
+    r._qty = num(r["Invoice Quantity"]) ?? 0;
+    r._absQty = Math.abs(r._qty);
+    r._mrp = num(r["MRP"]) ?? 0;
+    r._disc = num(r["MRP Discount"]) ?? 0;
+    r._total = num(r["Total"]) ?? 0;
+    r._tax = num(r["Taxable Amount"]) ?? 0;
+    r._gst = ["CGST 9%","SGST 9%","IGST 18%","IGST 0%"].reduce((s,c) => s + (num(r[c]) || 0), 0);
+    r._date = toDate(r["TXNDate"]);
+    r._type = str(r["Transaction Type"]);
+  });
+  Object.assign(log, {removedExec: removedExec.length, mapped, removedBranch: removedBranch.length, finalRows: rows.length});
+
+  // data checks
+  const chk = [];
+  const add = (name, list) => chk.push({name, rows: list});
+  add("Tax + GST <> Total", rows.filter(r => Math.abs(r._tax + r._gst - r._total) > 1));
+  add("MRP x Qty - Disc <> Total", rows.filter(r => Math.abs(r._mrp * r._absQty - r._disc - r._total) > 1));
+  const ser = rows.filter(r => str(r["Item Type"]) === "Serialized" && r._type === "POS" && str(r["Batch No"]));
+  const cnt = {}; ser.forEach(r => { const k = str(r["Batch No"]); cnt[k] = (cnt[k] || 0) + 1; });
+  add("Same IMEI sold twice", ser.filter(r => cnt[str(r["Batch No"])] > 1));
+  add("Zero Total", rows.filter(r => r._total === 0));
+  add("Discount above 40% of MRP", rows.filter(r => r._mrp && Math.abs(r._disc / (r._mrp * r._absQty)) > 0.4));
+  return {rows, log, chk, removed: removedExec.map(r => ({...r, "Removed Reason":"Executive removed"}))
+            .concat(removedBranch.map(r => ({...r, "Removed Reason":"Branch filter"})))};
+}
+
+/* ======================= MASTER RULES ======================= */
+function loadRules(wb){
+  const rows = sheetRows(wb, "Price Master");
+  if (!rows.length || !("Rule ID" in rows[0])) throw new Error("Master file: sheet 'Price Master' with 'Rule ID' column not found.");
+  const rules = [];
+  rows.forEach(r => {
+    if (str(r["Active (Y/N)"]).toUpperCase() !== "Y") return;
+    if (str(r["MRP Version"]) === "DOA") return;
+    const toks = str(r["Sales Product Family (match)"]).split(";").map(x => x.trim()).filter(Boolean);
+    const colour = str(r["Colour"]).toUpperCase();
+    rules.push({
+      id: str(r["Rule ID"]), product: str(r["Product (as per PDF)"]),
+      fams: toks.filter(t => !t.toUpperCase().startsWith("LOB:")).map(norm),
+      lobs: toks.filter(t => t.toUpperCase().startsWith("LOB:")).map(t => norm(t.slice(4))),
+      cap: str(r["Capacity"]).toUpperCase(),
+      cols: (colour === "" || colour === "ALL") ? [] : colour.split(",").map(norm),
+      ver: str(r["MRP Version"]),
+      type: str(r["Rule Type"]).toUpperCase(),
+      mrp: num(r["MRP (Rs)"]), offer: num(r["Offer Price - Cash (Rs)"]),
+      venus: num(r["Venus Disc %"]) || 0, crt: num(r["CRT Disc %"]) || 0,
+      loan: num(r["Loan Price (Rs)"]), lv: num(r["Loan Venus %"]), lc: num(r["Loan CRT %"]),
+      combo: str(r["Freebies / Remarks"]).toUpperCase().includes("GRIPP COMBO"),
+      vfrom: toDate(r["Valid From"]), vto: toDate(r["Valid To"])
+    });
+  });
+  return rules;
+}
+
+/* ======================= STEP 3: DISCOUNT CHECK ======================= */
+function careLob(name){
+  const n = str(name).toUpperCase();
+  const kind = n.includes("PROTECT") ? "PROTECT+" : "CARE+";
+  for (const [k, p] of [["IPHONE","IPH"],["IPAD","IPD"],["MACBOOK","MAC"],["MAC ","MAC"],["IMAC","MAC"],["WATCH","W"],["AIRPODS","APD"],["HEADPHONE","APD"]])
+    if (n.includes(k)) return `${p} ${kind}`;
+  return null;
+}
+function capOk(rc, row){
+  if (rc === "" || rc === "ALL") return [true, 0];
+  if (rc.startsWith("CTO")){
+    const name = str(row["Item_Name"]).toUpperCase();
+    const parts = rc.replace("CTO","").trim().split("/").map(x => x.trim());
+    return ["70W", ...parts].every(p => name.replace(/ /g,"").includes(p)) ? [true, 2] : [false, 0];
+  }
+  return [normCap(rc) === normCap(row["Capacity"]), 1];
+}
+function allowedPct(rule, row, S){
+  const mrp = row._unitMrp, loan = row._pay === "Loan";
+  if (rule.type === "FIXED"){
+    let price = rule.offer;
+    if (loan && rule.loan) price = rule.loan;
+    if (price == null || !mrp) return 0;
+    return Math.max(mrp - price, 0) / mrp;
+  }
+  let p = (loan && (rule.lv != null || rule.lc != null)) ? (rule.lv || 0) + (rule.lc || 0) : rule.venus + rule.crt;
+  if (rule.combo && row._combo) p += S.combo;
+  return p;
+}
+function findRule(row, rules, S){
+  const fam = norm(row["Product Family"]), lob = norm(row["LOB"]), col = norm(row["Color"]);
+  const old = row._ver === "Old";
+  let bestScore = -1, ties = [];
+  for (const r of rules){
+    if (r.vfrom && row._date && row._date < r.vfrom) continue;
+    if (r.vto && row._date && row._date > r.vto) continue;
+    const famHit = r.fams.includes(fam), lobHit = r.lobs.includes(lob);
+    if (!famHit && !lobHit) continue;
+    const [ok, capScore] = capOk(r.cap, row); if (!ok) continue;
+    if (r.cols.length && !r.cols.includes(col)) continue;
+    let verScore = 0;
+    if (r.type === "FIXED"){
+      if (r.mrp == null || Math.abs(r.mrp - row._unitMrp) > 1) continue;
+    } else {
+      if (r.ver === "Old" && !old) continue;
+      if ((r.ver === "New" || r.ver === "NPI") && old) continue;
+      verScore = (((r.ver === "Old") === old) && r.ver) ? 4 : 0;
+    }
+    const score = verScore + (famHit ? 2 : 0) + capScore + (r.cols.length ? 1 : 0);
+    if (score > bestScore){ bestScore = score; ties = [r]; }
+    else if (score === bestScore) ties.push(r);
+  }
+  if (!ties.length) return null;
+  return ties.reduce((a, b) => allowedPct(b, row, S) > allowedPct(a, row, S) ? b : a);
+}
+
+function runCheck(sales, rules, ilMap, S){
+  const scope = S.scope.split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
+  const loanW = S.loan.split(",").map(x => x.trim().toUpperCase()).filter(Boolean);
+  const comboInv = new Set(sales.filter(r => str(r["Brand"]).toUpperCase() === "GRIPP" && str(r["Item_Name"]).toUpperCase().includes("COMBO")).map(r => str(r["TXNName"])));
+  const df = sales.filter(r => r._type === "POS" && scope.includes(str(r["Category"]).toUpperCase()));
+
+  df.forEach(r => {
+    if (!str(r["LOB"]) && str(r["Category"]).toUpperCase() === "CARE PLANS") r["LOB"] = careLob(r["Item_Name"]);
+    r._unitMrp = Math.abs(r._mrp);
+    r._mrpValue = r._unitMrp * r._absQty;
+    r._actPct = r._mrpValue > 0 ? r._disc / r._mrpValue : null;
+    const il = ilMap.get(str(r["Item Code"]).toUpperCase());
+    r._ilMrp = il ?? null;
+    if (!(il > 0)) r._ver = "New (not in item list)";
+    else if (r._unitMrp < il - 1) r._ver = "Old";
+    else if (r._unitMrp > il + 1) r._ver = "Above Item List MRP";
+    else r._ver = "New";
+    const t = (str(r["Affordability"]) + " " + str(r["Scheme"])).toUpperCase();
+    r._pay = loanW.some(w => t.includes(w)) ? "Loan" : "Cash";
+    r._combo = comboInv.has(str(r["TXNName"]));
+
+    const rule = findRule(r, rules, S);
+    if (rule){
+      r._rule = rule; r._allowPct = allowedPct(rule, r, S);
+      r._allow = Math.round(r._mrpValue * r._allowPct);
+      r._extra = Math.round(r._disc - r._allow);
+      r._extraPct = r._mrpValue > 0 ? r._extra / r._mrpValue : null;
+    } else { r._rule = null; r._allowPct = null; r._allow = null; r._extra = null; r._extraPct = null; }
+
+    let res = "Within Offer";
+    if (r._extra != null && r._extra > S.tol) res = "EXTRA DISCOUNT";
+    if (!r._rule) res = "No Rule Found";
+    if (r._ver === "Above Item List MRP") res = "CHECK MRP";
+    const demo = str(r["Item_Name"]).toUpperCase().includes("DEMO") || str(r["Item Code"]).toUpperCase().startsWith("3P");
+    if (demo && res === "EXTRA DISCOUNT") res = "DEMO STOCK";
+    r._res = res;
+  });
+  return df;
+}
+
+/* ======================= OUTPUT TABLES ======================= */
+function lineRow(r){
+  return {
+    "Date": ymd(r._date), "Branch ID": r["Branch ID"], "Invoice": r["TXNName"], "Executive": r["Executive"],
+    "Item Code": r["Item Code"], "Item Name": r["Item_Name"], "LOB": r["LOB"], "Product Family": r["Product Family"],
+    "Capacity": r["Capacity"], "Color": r["Color"], "IMEI / Batch": r["Batch No"], "Pay Mode": r._pay,
+    "Affordability": r["Affordability"], "Gripp Combo": r._combo ? "Yes" : "", "Qty": r._qty,
+    "Unit MRP": r._unitMrp, "Item List MRP": r._ilMrp, "MRP Version": r._ver, "MRP Value": r._mrpValue,
+    "Actual Disc (Rs)": r._disc, "Actual Disc %": r._actPct,
+    "Rule ID": r._rule ? r._rule.id : "", "Offer Rule (PDF)": r._rule ? r._rule.product : "",
+    "Allowed Disc %": r._allowPct, "Allowed Disc (Rs)": r._allow,
+    "Extra Disc (Rs)": r._extra, "Extra Disc %": r._extraPct, "Bill Total": r._total, "Result": r._res
+  };
+}
+function groupSumm(df, keys){
+  const m = new Map();
+  df.filter(r => r._rule).forEach(r => {
+    const k = keys.map(f => str(f(r))).join("\u0001");
+    if (!m.has(k)) m.set(k, {keys: keys.map(f => f(r)), lines:0, qty:0, mrp:0, act:0, allow:0, xl:0, x:0});
+    const g = m.get(k);
+    g.lines++; g.qty += r._qty; g.mrp += r._mrpValue; g.act += r._disc; g.allow += r._allow;
+    if (r._res === "EXTRA DISCOUNT"){ g.xl++; g.x += r._extra; }
+  });
+  return [...m.values()].sort((a, b) => b.x - a.x);
+}
+function summRows(df, spec){
+  return groupSumm(df, spec.map(s => s[1])).map(g => {
+    const o = {}; spec.forEach((s, i) => o[s[0]] = g.keys[i]);
+    return Object.assign(o, {"Lines": g.lines, "Qty": g.qty, "MRP Value": g.mrp, "Actual Disc (Rs)": g.act,
+      "Allowed Disc (Rs)": g.allow, "Extra Lines": g.xl, "Extra Disc (Rs)": g.x,
+      "Actual Disc %": g.mrp ? g.act / g.mrp : null, "Extra Disc %": g.mrp ? g.x / g.mrp : null});
+  });
+}
+
+let REPORT = null;
+function build(){
+  const S = readSettings();
+  if (!S.exec.length && !Object.keys(S.map).length)
+    setMsg("Note: executive remove list and branch mapping are empty (open Settings).");
+  const salesRaw = sheetRows(files.sales.wb);
+  const {rows, log, chk, removed} = cleanSales(salesRaw, S);
+  const rules = loadRules(files.master.wb);
+  const items = sheetRows(files.items.wb);
+  if (!items.length || !("Item Code" in items[0])) throw new Error("Item List: 'Item Code' column not found.");
+  if (!(S.ilmrp in items[0])) throw new Error(`Item List: MRP column '${S.ilmrp}' not found. Change it in Settings.`);
+  const ilMap = new Map();
+  items.forEach(r => ilMap.set(str(r["Item Code"]).toUpperCase(), num(r[S.ilmrp])));
+
+  const df = runCheck(rows, rules, ilMap, S);
+  const matched = df.filter(r => r._rule);
+  const ex = df.filter(r => r._res === "EXTRA DISCOUNT");
+  const mrpV = sum(matched, r => r._mrpValue), exV = sum(ex, r => r._extra);
+  const lines = df.map(lineRow);
+
+  const overview = [
+    ["Sales rows in file", log.rowsInFile], ["Footer/blank rows removed", log.footer],
+    ["Executives removed (rows)", log.removedExec], ["Branch rows mapped to main", log.mapped],
+    ["Branch filter removed (rows)", log.removedBranch], ["Sales rows after cleaning", log.finalRows],
+    ["Active offer rules", rules.length], ["Item list rows", items.length],
+    ["In-scope POS lines", df.length], ["Matched with offer rule", matched.length],
+    ["No rule found", df.filter(r => r._res === "No Rule Found").length],
+    ["Check MRP", df.filter(r => r._res === "CHECK MRP").length],
+    ["Within offer", df.filter(r => r._res === "Within Offer").length],
+    ["Demo stock (kept separate)", df.filter(r => r._res === "DEMO STOCK").length],
+    ["EXTRA DISCOUNT lines", ex.length],
+    ["MRP value (matched)", Math.round(mrpV)], ["Actual discount (matched)", Math.round(sum(matched, r => r._disc))],
+    ["Allowed discount (matched)", Math.round(sum(matched, r => r._allow))], ["EXTRA DISCOUNT (Rs)", Math.round(exV)],
+    ["Extra discount % of MRP", mrpV ? (exV / mrpV * 100).toFixed(2) + "%" : "0%"]
+  ].map(([a, b]) => ({"Metric": a, "Value": b}));
+
+  const dates = rows.map(r => r._date).filter(Boolean).sort((a, b) => a - b);
+  const T = {
+    "Extra Discount": lines.filter(r => r.Result === "EXTRA DISCOUNT").sort((a, b) => b["Extra Disc (Rs)"] - a["Extra Disc (Rs)"]),
+    "By Branch": summRows(df, [["Branch ID", r => r["Branch ID"]]]),
+    "By Executive": summRows(df, [["Branch ID", r => r["Branch ID"]], ["Executive", r => r["Executive"]]]),
+    "By Model": summRows(df, [["LOB", r => r["LOB"]], ["Product Family", r => r["Product Family"]]]),
+    "By Offer Rule": summRows(df, [["Rule ID", r => r._rule.id], ["Offer Rule (PDF)", r => r._rule.product]]),
+    "By Date": summRows(df, [["Date", r => ymd(r._date)]]).sort((a, b) => a.Date < b.Date ? -1 : 1),
+    "By Pay Mode": summRows(df, [["Pay Mode", r => r._pay]]),
+    "No Rule / Check": lines.filter(r => ["No Rule Found","CHECK MRP","DEMO STOCK"].includes(r.Result)),
+    "Data Checks": chk.map(c => ({"Check": c.name, "Rows Found": c.rows.length, "Result": c.rows.length ? "REVIEW" : "OK"})),
+    "All Lines": lines,
+    "Overview": overview
+  };
+  const checkDetail = chk.filter(c => c.rows.length).map(c => [c.name, c.rows.map(r => ({
+    "Date": ymd(r._date), "Branch ID": r["Branch ID"], "Invoice": r["TXNName"], "Type": r._type, "Executive": r["Executive"],
+    "Item Code": r["Item Code"], "Item Name": r["Item_Name"], "IMEI / Batch": r["Batch No"], "Qty": r._qty,
+    "MRP": r._mrp, "MRP Discount": r._disc, "Total": r._total}))]);
+
+  REPORT = {T, checkDetail, removed, kpi: {
+    lines: df.length, matched: matched.length, ex: ex.length, exV, exPct: mrpV ? exV / mrpV : 0,
+    noRule: df.filter(r => r._res === "No Rule Found").length, branches: new Set(rows.map(r => r["Branch ID"])).size,
+    from: ymd(dates[0]), to: ymd(dates[dates.length-1]), act: sum(matched, r => r._disc)
+  }};
+}
+
+/* ======================= RENDER ======================= */
+const TAB_ORDER = ["Extra Discount","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks","All Lines","Overview"];
+let curTab = "Extra Discount", sortCol = null, sortAsc = false;
+const MAX_ROWS = 1500;
+
+function renderKpis(){
+  const k = REPORT.kpi;
+  $("kpis").innerHTML = [
+    ["Extra Discount (Rs)", "₹ " + inr(k.exV), `${(k.exPct*100).toFixed(2)}% of MRP value`, "bad"],
+    ["Extra Discount Lines", inr(k.ex), `out of ${inr(k.matched)} matched lines`, "bad"],
+    ["Total Discount Given", "₹ " + inr(k.act), "on matched lines", ""],
+    ["Lines Checked", inr(k.lines), `${k.branches} branches · ${k.from} to ${k.to}`, ""],
+    ["No Rule Found", inr(k.noRule), "add rule in master", k.noRule ? "" : "ok"]
+  ].map(([l, v, s, c]) => `<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
+}
+function renderTabs(){
+  $("tabs").innerHTML = TAB_ORDER.map(t => `<button class="tab ${t === curTab ? "on" : ""}" data-t="${t}">${t}${t === "Extra Discount" ? " (" + REPORT.T[t].length + ")" : ""}</button>`).join("");
+  $("tabs").querySelectorAll(".tab").forEach(b => b.onclick = () => { curTab = b.dataset.t; sortCol = null; $("q").value = ""; renderTabs(); renderTable(); });
+}
+const isPct = c => c.includes("%");
+const isMoney = c => /(Rs\)|MRP|Value|Total)/.test(c) && !isPct(c) && c !== "MRP Version";
+function cell(c, v){
+  if (v == null || v === "") return `<td></td>`;
+  if (c === "Result"){
+    const cls = v === "EXTRA DISCOUNT" || v === "REVIEW" ? "p-bad" : (v === "Within Offer" || v === "OK" ? "p-ok" : "p-warn");
+    return `<td><span class="pill ${cls}">${v}</span></td>`;
+  }
+  if (typeof v === "number"){
+    if (isPct(c)) return `<td class="n">${pct(v)}</td>`;
+    return `<td class="n">${isMoney(c) || Math.abs(v) >= 1000 ? inr(v) : (Number.isInteger(v) ? v : v.toFixed(2))}</td>`;
+  }
+  return `<td>${String(v).replace(/[&<>]/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[s]))}</td>`;
+}
+function renderTable(){
+  let data = REPORT.T[curTab] || [];
+  const q = $("q").value.trim().toLowerCase();
+  if (q) data = data.filter(r => Object.values(r).some(v => v != null && String(v).toLowerCase().includes(q)));
+  if (sortCol){
+    data = [...data].sort((a, b) => {
+      const x = a[sortCol], y = b[sortCol];
+      if (x == null) return 1; if (y == null) return -1;
+      const r = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y));
+      return sortAsc ? r : -r;
+    });
+  }
+  const cols = data.length ? Object.keys(data[0]) : Object.keys((REPORT.T[curTab] || [{}])[0] || {});
+  const shown = data.slice(0, MAX_ROWS);
+  $("tbl").innerHTML = `<thead><tr>${cols.map(c => `<th data-c="${c}">${c}${sortCol === c ? (sortAsc ? " ▲" : " ▼") : ""}</th>`).join("")}</tr></thead>` +
+    `<tbody>${shown.map(r => `<tr>${cols.map(c => cell(c, r[c])).join("")}</tr>`).join("")}</tbody>`;
+  $("tbl").querySelectorAll("th").forEach(th => th.onclick = () => {
+    const c = th.dataset.c; if (sortCol === c) sortAsc = !sortAsc; else { sortCol = c; sortAsc = false; } renderTable();
+  });
+  $("cnt").textContent = `${inr(data.length)} rows` + (data.length > MAX_ROWS ? ` (showing first ${MAX_ROWS}, full data in Excel)` : "");
+  const notes = {
+    "Extra Discount": "Extra = actual discount on bill − allowed discount as per offer master. Round-off up to the tolerance (Settings) is ignored.",
+    "By Executive": "Sorted by extra discount. Click a column header to sort.",
+    "No Rule / Check": "No Rule Found = model/MRP not in master (add a row). CHECK MRP = bill MRP higher than item list. DEMO STOCK = demo items with extra discount, kept out of the total.",
+    "Data Checks": "Sales statement checks on cleaned data. Full rows are in the Excel report."
+  };
+  $("tnote").textContent = notes[curTab] || "";
+}
+$("q").addEventListener("input", renderTable);
+
+/* ======================= EXCEL EXPORT ======================= */
+function toSheet(rows){
+  const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{"Info":"No rows"}]);
+  const cols = rows.length ? Object.keys(rows[0]) : [];
+  const range = XLSX.utils.decode_range(ws["!ref"]);
+  cols.forEach((c, j) => {
+    const fmt = isPct(c) ? "0.00%" : (isMoney(c) ? "#,##0" : null);
+    if (!fmt) return;
+    for (let i = 1; i <= range.e.r; i++){
+      const a = ws[XLSX.utils.encode_cell({r:i, c:j})];
+      if (a && a.t === "n") a.z = fmt;
+    }
+  });
+  ws["!cols"] = cols.map(c => ({wch: Math.min(Math.max(c.length, ...rows.slice(0, 200).map(r => String(r[c] ?? "").length)) + 2, 45)}));
+  ws["!freeze"] = {xSplit: 0, ySplit: 1};
+  return ws;
+}
+$("dlBtn").onclick = () => {
+  const wb = XLSX.utils.book_new();
+  const order = ["Overview","Extra Discount","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks"];
+  order.forEach(n => XLSX.utils.book_append_sheet(wb, toSheet(REPORT.T[n]), n.replace("/", "-").slice(0, 31)));
+  REPORT.checkDetail.forEach(([n, rows]) => XLSX.utils.book_append_sheet(wb, toSheet(rows), ("Chk - " + n).slice(0, 31)));
+  if (REPORT.removed.length) XLSX.utils.book_append_sheet(wb, toSheet(REPORT.removed.map(r => ({
+    "Removed Reason": r["Removed Reason"], "Date": r["TXNDate"], "Branch ID": r["Original Branch ID"] || r["Branch ID"],
+    "Invoice": r["TXNName"], "Executive": r["Executive"], "Item Name": r["Item_Name"], "Total": num(r["Total"])}))), "Removed Rows");
+  XLSX.utils.book_append_sheet(wb, toSheet(REPORT.T["All Lines"]), "All Lines");
+  XLSX.writeFile(wb, `Discount_Check_${REPORT.kpi.from}_to_${REPORT.kpi.to}.xlsx`);
+};
+
+/* ======================= RUN ======================= */
+$("runBtn").onclick = () => {
+  setMsg("Processing ... please wait");
+  $("runBtn").disabled = true;
+  setTimeout(() => {
+    try {
+      const t0 = performance.now();
+      build();
+      curTab = "Extra Discount"; sortCol = null;
+      renderKpis(); renderTabs(); renderTable();
+      $("results").classList.remove("hide"); $("dlBtn").classList.remove("hide");
+      setMsg(`Done in ${((performance.now() - t0) / 1000).toFixed(1)} s.`);
+    } catch(e){
+      console.error(e); setMsg("Error: " + e.message, true);
+    }
+    $("runBtn").disabled = false;
+  }, 30);
+};
+
+loadSettings();
+</script>
+</body>
+</html>
