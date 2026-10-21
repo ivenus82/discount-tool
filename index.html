@@ -182,34 +182,85 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .clk:hover{border-color:var(--accent)}
 .clk .go{font-size:11.5px;color:var(--accent);font-weight:600;margin-top:4px}
 
-/* drawer */
-#ov{position:fixed;inset:0;background:rgba(10,15,30,.45);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
-#ov.on{opacity:1;pointer-events:auto}
-#dw{position:fixed;top:0;right:0;bottom:0;width:min(980px,100%);background:var(--bg);z-index:61;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.2)}
-#dw.on{transform:none}
-.dwh{background:linear-gradient(120deg,#0f1d47 0%,#1d3a8a 70%,#2a5bd7 100%);color:#fff;padding:18px 20px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
-.dwh .t{font-size:19px;font-weight:800;letter-spacing:-.02em}
-.dwh .s{font-size:12.5px;color:#c7d4f5;margin-top:2px}
-.dwh .b{display:flex;gap:8px;flex:none}
-.dwb{overflow:auto;padding:16px 20px 30px;flex:1}
-.dstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+/* stores search */
+.tbar2{display:flex;gap:10px;align-items:center}
+.tbar2 input{width:260px}
+.tbar2 span{font-size:12px;color:var(--muted);white-space:nowrap}
+.gc.ok{opacity:.85}
+.gc.ok .am{color:var(--good)}
+
+.dstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
 .dstat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .dstat .l{font-size:11.5px;color:var(--muted)}
 .dstat .v{font-size:20px;font-weight:750;letter-spacing:-.02em}
 .dstat.bad .v{color:var(--leak)} .dstat.warn .v{color:var(--warn)}
-.dsplit{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:14px}
-.dlist{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.dlist h3{font-size:13px;margin:0 0 8px}
-.dli{display:grid;grid-template-columns:1fr auto;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px dashed var(--line)}
-.dli:last-child{border-bottom:0}
-.dli span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dli b{font-weight:650}
-.dli small{color:var(--muted);font-weight:400;margin-left:6px}
-.dsec{font-size:14px;font-weight:700;margin:6px 0 8px}
-.dw-t .tw{max-height:none}
-tr.ir{cursor:pointer}
-tr.ir.sel td{background:var(--leak-bg)!important}
-
+/* modal */
+#ov{position:fixed;inset:0;background:rgba(10,15,30,.5);z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .18s}
+#ov.on{opacity:1;pointer-events:auto}
+#md{background:var(--bg);width:min(1080px,100%);max-height:calc(100vh - 48px);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.35);transform:scale(.97) translateY(8px);transition:transform .2s}
+#ov.on #md{transform:none}
+.mdh{background:linear-gradient(120deg,#0f1d47 0%,#1d3a8a 70%,#2a5bd7 100%);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.mdl{display:flex;gap:12px;align-items:center;min-width:0}
+.mdt{font-size:19px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumbs{font-size:12px;color:#c7d4f5;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.crumbs a{color:#c7d4f5;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.crumbs a:hover{color:#fff}
+.mdh .b{display:flex;gap:8px;flex:none}
+.mdb{overflow:auto;padding:18px;flex:1}
+.lvl{font-size:13px;font-weight:700;margin:4px 0 10px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.lvl span{font-weight:500;color:var(--muted);font-size:12px}
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.cat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;text-align:left;color:var(--ink);font:inherit;transition:border-color .15s,transform .15s,box-shadow .15s;display:flex;flex-direction:column;gap:4px}
+.cat:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 18px rgba(16,24,40,.08)}
+.cat .ch{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.cat .ci{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--soft);border:1px solid var(--line);font-size:17px}
+.cat .am{font-size:30px;font-weight:800;letter-spacing:-.02em;color:var(--leak);margin-top:8px}
+.cat .am.z{color:var(--good)}
+.cat .mt{font-size:12.5px;color:var(--ink2)}
+.cat .ft{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:11.5px;border-radius:20px;padding:2px 9px;background:var(--soft);border:1px solid var(--line);color:var(--ink2);font-weight:600}
+.chip.w{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.cat .go{font-size:12px;color:var(--accent);font-weight:600;margin-top:8px}
+.cat.dis{cursor:default;opacity:.7}
+.cat.dis:hover{transform:none;border-color:var(--line);box-shadow:none}
+/* invoice cards */
+.invs{display:flex;flex-direction:column;gap:10px}
+.inv{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.inv.ap{border-left:4px solid var(--warn-bar)}
+.inv.lk{border-left:4px solid var(--leak)}
+.invh{display:grid;grid-template-columns:1.3fr 1.6fr repeat(3,minmax(90px,.7fr)) 24px;gap:12px;align-items:center;padding:12px 14px;cursor:pointer}
+.invh:hover{background:var(--soft)}
+.invh .no{font-weight:700;font-size:13.5px}
+.invh .no small,.invh .pr small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.invh .pr{font-size:12.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.invh .k{font-size:11px;color:var(--muted)}
+.invh .v{font-size:13.5px;font-weight:650;font-variant-numeric:tabular-nums}
+.invh .v.x{color:var(--leak)}
+.invh .ar{color:var(--muted);transition:transform .15s;text-align:center}
+.inv.open .invh .ar{transform:rotate(90deg)}
+.invr{padding:0 14px 6px 14px;font-size:12px;color:var(--muted)}
+.invr b{color:var(--ink2);font-weight:600}
+.itms{display:none;border-top:1px solid var(--line);background:var(--soft);padding:6px 14px 10px}
+.inv.open .itms{display:block}
+.itm{display:grid;grid-template-columns:2.2fr repeat(4,minmax(80px,.6fr));gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:12.5px;align-items:center}
+.itm:last-child{border-bottom:0}
+.itm .n{font-weight:600}
+.itm .n small{display:block;color:var(--muted);font-weight:400}
+.itm .c{text-align:right;font-variant-numeric:tabular-nums}
+.itm .c small{display:block;color:var(--muted);font-size:10.5px}
+.itm .c.x{color:var(--leak);font-weight:650}
+@media (max-width: 700px){
+  #ov{padding:0;align-items:stretch}
+  #md{max-height:100vh;border-radius:0}
+  .cats{grid-template-columns:1fr}
+  .invh{grid-template-columns:1fr 1fr;row-gap:6px}
+  .invh .pr{grid-column:1 / -1}
+  .invh .ar{display:none}
+  .itm{grid-template-columns:1fr 1fr}
+  .itm .n{grid-column:1 / -1}
+  .tbar2 input{width:100%}
+  .mdh .b .hbtn#mdDl{display:none}
+}
 /* tooltip */
 #tip{position:fixed;pointer-events:none;z-index:50;background:#101828;color:#fff;font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:320px;opacity:0;transition:opacity .08s;white-space:pre-line}
 #tip.on{opacity:1}
@@ -259,7 +310,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
 @media print{
   body{background:#fff}
   header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .hbtns,.upl,#detail,footer,.segs,.more,#ov,#dw{display:none!important}
+  .hbtns,.upl,footer,.tbar2,#ov{display:none!important}
   .card,.heroL,.mini{box-shadow:none;break-inside:avoid}
   .strip div,.fl,.dot,.c,.dline,.lg i,.heroL:before{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .grid2{grid-template-columns:1fr 1fr}
@@ -341,37 +392,26 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
 
 
   <div class="card">
-    <div class="ct"><h2 id="gTitle">Where the leakage is</h2>
-      <div class="segs" id="segs">
-        <button class="seg on" data-g="branch">Branches</button><button class="seg" data-g="exec">Executives</button><button class="seg" data-g="prod">Products</button><button class="seg hide" data-g="day" id="segDay">Days</button>
-      </div>
+    <div class="ct"><h2>Stores</h2>
+      <div class="tbar2"><input type="search" id="sq" placeholder="Search store or city..."><span id="scnt"></span></div>
     </div>
     <div class="gcards" id="gcards"></div>
-    <div class="more"><button class="sec hide" id="moreBtn" type="button"></button></div>
-    <div class="note">Click any card to see its invoices and items.</div>
-  </div>
-
-  <div class="card" id="detail">
-    <div class="ct"><h2>Detail</h2><span>click a column header to sort</span></div>
-    <div class="tabs" id="tabs"></div>
-    <div class="tbar">
-      <div class="l"><input type="search" id="q" placeholder="Search branch, executive, invoice, item..."><label class="chk hide" id="allColsL"><input type="checkbox" id="allCols"> Show all columns</label></div>
-      <span id="cnt"></span>
-    </div>
-    <div class="tw"><table id="tbl"></table></div>
-    <div class="note" id="tnote"></div>
+    <div class="note">Click a store → Hardware / Care plans → executive → invoice.</div>
   </div>
 </section>
 
 </div></main>
 <footer>Discount Radar · runs fully in your browser</footer>
 <div id="tip"></div>
-<div id="ov"></div>
-<aside id="dw" aria-hidden="true">
-  <div class="dwh"><div><div class="t" id="dwT"></div><div class="s" id="dwS"></div></div>
-    <div class="b"><button class="hbtn" id="dwDl" type="button">Download to Excel</button><button class="hbtn" id="dwX" type="button" aria-label="Close">✕</button></div></div>
-  <div class="dwb" id="dwB"></div>
-</aside>
+<div id="ov">
+  <div id="md" role="dialog" aria-modal="true">
+    <div class="mdh">
+      <div class="mdl"><button class="hbtn hide" id="mdBack" type="button">← Back</button><div><div class="crumbs" id="mdC"></div><div class="mdt" id="mdT"></div></div></div>
+      <div class="b"><button class="hbtn" id="mdDl" type="button">Download to Excel</button><button class="hbtn" id="mdX" type="button" aria-label="Close">✕</button></div>
+    </div>
+    <div class="mdb" id="mdB"></div>
+  </div>
+</div>
 
 <script>
 /* ======================= DEFAULT SETTINGS ======================= */
@@ -855,140 +895,173 @@ const invCount = rows => new Set(rows.map(r => str(r["TXNName"]))).size;
 const niceDate = s => { if (!s) return ""; const d = new Date(s + "T00:00:00"); return d.toLocaleDateString("en-IN", {day:"numeric", month:"short", year:"numeric"}); };
 
 
-/* ---------- groups & cards ---------- */
+/* ---------- store cards & drill-down modal ---------- */
 const famName = f => str(f).replace(/\/\s*$/, "").trim() || "Other";
-const GROUPS = {
-  branch: {title: "Where the leakage is · by branch", key: r => str(r["Branch ID"]), label: r => str(r["Branch ID"]), sub: r => str(r["Branch City"])},
-  exec:   {title: "Where the leakage is · by executive", key: r => str(r["Branch ID"]) + "|" + str(r["Executive"]), label: r => str(r["Executive"]), sub: r => str(r["Branch ID"])},
-  prod:   {title: "Where the leakage is · by product", key: r => famName(r["Product Family"]), label: r => famName(r["Product Family"]), sub: r => str(r["LOB"])},
-  day:    {title: "Where the leakage is · by day", key: r => ymd(r._date), label: r => niceDate(ymd(r._date)), sub: r => ""}
-};
-let curGroup = "branch", showAll = false;
-
-function aggregate(gk){
-  const G = GROUPS[gk], m = new Map();
-  REPORT.df.forEach(r => {
-    const k = G.key(r);
-    if (!m.has(k)) m.set(k, {key: k, label: G.label(r), sub: G.sub(r), n: 0, x: 0, xn: 0, a: 0, an: 0, act: 0, inv: new Set(), xinv: new Set(), ainv: new Set()});
-    const g = m.get(k), t = str(r["TXNName"]);
-    g.n++; g.inv.add(t); g.act += r._disc || 0;
-    if (r._res === "EXTRA DISCOUNT"){ g.x += r._extra; g.xn++; g.xinv.add(t); }
-    if (r._res === "APPROVAL IN REMARK"){ g.a += r._extra; g.an++; g.ainv.add(t); }
-  });
-  return [...m.values()];
+const CATS = {hw: {label: "Hardware", icon: "🖥️", test: r => str(r["Category"]).toUpperCase() !== "CARE PLANS"},
+              care: {label: "Care plans", icon: "🛡️", test: r => str(r["Category"]).toUpperCase() === "CARE PLANS"}};
+function stat(rows){
+  const ex = rows.filter(r => r._res === "EXTRA DISCOUNT"), ap = rows.filter(r => r._res === "APPROVAL IN REMARK");
+  return {n: rows.length, inv: invCount(rows), x: sum(ex, r => r._extra), xn: ex.length, xinv: invCount(ex),
+          a: sum(ap, r => r._extra), an: ap.length, ainv: invCount(ap), act: sum(rows, r => r._disc || 0)};
 }
+function statsBox(st){
+  return `<div class="dstats">
+    <div class="dstat bad"><div class="l">Leakage</div><div class="v num">${rs(st.x)}</div></div>
+    <div class="dstat"><div class="l">Invoices with leakage</div><div class="v num">${inr(st.xinv)} <small style="font-size:12px;color:var(--muted);font-weight:500">${items(st.xn)}</small></div></div>
+    <div class="dstat"><div class="l">Invoices checked</div><div class="v num">${inr(st.inv)}</div></div>
+    <div class="dstat"><div class="l">Discount given</div><div class="v num">${lakh(st.act)}</div></div>
+    <div class="dstat ${st.a ? "warn" : ""}"><div class="l">Approval noted</div><div class="v num">${st.a ? lakh(st.a) : "–"}${st.a ? ` <small style="font-size:12px;font-weight:500">${invs(st.ainv)}</small>` : ""}</div></div>
+  </div>`;
+}
+
+/* level 0: all stores */
+let STORES = [];
 function renderCards(){
-  const G = GROUPS[curGroup], tot = REPORT.kpi.exV || 1;
-  $("gTitle").textContent = G.title;
-  document.querySelectorAll(".seg").forEach(b => b.classList.toggle("on", b.dataset.g === curGroup));
-  let list = aggregate(curGroup).filter(g => g.x > 0 || g.a > 0);
-  if (curGroup === "day") list.sort((p, q) => p.key < q.key ? -1 : 1); else list.sort((p, q) => q.x - p.x || q.a - p.a);
-  const total = list.length, LIMIT = 12;
-  const shown = showAll ? list : list.slice(0, LIMIT);
-  $("gcards").innerHTML = shown.length ? shown.map((g, i) => `<button class="gc ${g.x ? "" : "zero"}" data-k="${esc(g.key)}">
-      ${curGroup === "day" ? "" : `<span class="rk">#${i + 1}</span>`}
-      <span class="nm">${esc(g.label)}</span><span class="sb">${esc(g.sub || "")}</span>
-      <span class="am num">${g.x ? lakh(g.x) : "₹0"}</span>
-      <span class="mt"><b>${invs(g.xinv.size)}</b> with leakage · ${items(g.xn)}</span><span class="mt" style="color:var(--muted)">${invs(g.inv.size)} checked</span>
-      <span class="sh"><i style="width:${Math.max(g.x / tot * 100, g.x ? 1.5 : 0).toFixed(1)}%"></i></span>
-      <span class="ft"><span>${(g.x / tot * 100).toFixed(1)}% of total leakage</span>${g.a ? `<span class="ap">+${lakh(g.a)} approval</span>` : ""}</span>
-    </button>`).join("") : `<div class="empty">No leakage found.</div>`;
-  $("moreBtn").classList.toggle("hide", total <= LIMIT);
-  $("moreBtn").textContent = showAll ? "Show top 12" : `Show all ${total}`;
-  $("gcards").querySelectorAll(".gc").forEach(b => b.onclick = () => {
-    const k = b.dataset.k, g = list.find(x => x.key === k);
-    openEntity(curGroup, k, g);
-  });
-}
-$("segs").addEventListener("click", e => { const b = e.target.closest(".seg"); if (!b) return; curGroup = b.dataset.g; showAll = false; renderCards(); });
-$("moreBtn").onclick = () => { showAll = !showAll; renderCards(); };
-
-/* ---------- drawer ---------- */
-let DW_ROWS = [], DW_NAME = "";
-function topBy(rows, keyFn, n){
+  const tot = REPORT.kpi.exV || 1;
   const m = new Map();
-  rows.forEach(r => { const k = keyFn(r) || "–"; const g = m.get(k) || {k, x: 0, n: 0, inv: new Set()}; g.x += r._extra || 0; g.n++; g.inv.add(str(r["TXNName"])); m.set(k, g); });
-  return [...m.values()].sort((a, b) => b.x - a.x).slice(0, n || 6);
+  REPORT.df.forEach(r => { const k = str(r["Branch ID"]); if (!m.has(k)) m.set(k, {key: k, city: str(r["Branch City"]), rows: []}); m.get(k).rows.push(r); });
+  STORES = [...m.values()].map(g => ({...g, st: stat(g.rows)})).sort((a, b) => b.st.x - a.st.x || b.st.a - a.st.a || a.key.localeCompare(b.key));
+  const q = ($("sq").value || "").trim().toLowerCase();
+  const list = q ? STORES.filter(g => (g.key + " " + g.city).toLowerCase().includes(q)) : STORES;
+  const leaking = STORES.filter(g => g.st.x > 0).length;
+  $("scnt").textContent = `${leaking} of ${STORES.length} stores with leakage`;
+  let rank = 0;
+  $("gcards").innerHTML = list.length ? list.map(g => {
+    const st = g.st, ok = !st.x; if (!ok) rank = STORES.indexOf(g) + 1;
+    return `<button class="gc ${ok ? "ok" : ""}" data-k="${esc(g.key)}">
+      ${ok ? `<span class="rk" style="color:var(--good)">✓</span>` : `<span class="rk">#${STORES.indexOf(g) + 1}</span>`}
+      <span class="nm">${esc(g.key)}</span><span class="sb">${esc(g.city)}</span>
+      <span class="am num">${ok ? "No leakage" : lakh(st.x)}</span>
+      <span class="mt">${ok ? `${invs(st.inv)} checked` : `<b>${invs(st.xinv)}</b> with leakage · ${invs(st.inv)} checked`}</span>
+      <span class="sh"><i style="width:${Math.max(st.x / tot * 100, st.x ? 1.5 : 0).toFixed(1)}%"></i></span>
+      <span class="ft"><span>${ok ? "within offer" : (st.x / tot * 100).toFixed(1) + "% of total leakage"}</span>${st.a ? `<span class="ap">+${lakh(st.a)} approval</span>` : ""}</span>
+    </button>`;
+  }).join("") : `<div class="empty">No store matches.</div>`;
+  $("gcards").querySelectorAll(".gc").forEach(b => b.onclick = () => openModal({store: b.dataset.k}));
 }
-function listBox(title, list){
-  if (!list.length) return "";
-  return `<div class="dlist"><h3>${esc(title)}</h3>${list.map(i => `<div class="dli"><span>${esc(i.k)}</span><b class="num">${lakh(i.x)}<small>${inr(i.inv.size)} inv · ${items(i.n)}</small></b></div>`).join("")}</div>`;
-}
-const DW_COLS = ["Date","Branch ID","Invoice","Executive","Item Name","Pay Mode","Unit MRP","Actual Disc (Rs)","Allowed Disc (Rs)","Extra Disc (Rs)","Offer Rule (PDF)","Result","Internal Remark","Remark"];
-function miniTable(rows, hide){
-  const cols = DW_COLS.filter(c => !(hide || []).includes(c));
-  const data = rows.map(lineRow).sort((a, b) => (b["Extra Disc (Rs)"] || 0) - (a["Extra Disc (Rs)"] || 0));
-  return `<div class="tw"><table><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${data.map(r => `<tr>${cols.map(c => cell(c, r[c])).join("")}</tr>`).join("")}</tbody></table></div>`;
-}
-const INV_COLS = ["Date","Branch ID","Invoice","Executive","Items","Products","Pay Mode","MRP Value","Actual Disc (Rs)","Allowed Disc (Rs)","Extra Disc (Rs)","Internal Remark","Remark"];
-function invTable(rows, hide){
-  const cols = INV_COLS.filter(c => !(hide || []).includes(c));
-  const data = invoiceRows(rows);
-  return `<div class="tw"><table class="invt"><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${data.map(r => `<tr class="ir" data-inv="${esc(r.Invoice)}" title="Click to see items of this invoice">${cols.map(c => cell(c, r[c])).join("")}</tr>`).join("")}</tbody></table></div>`;
-}
-let DW_O = null;
-function drawItems(filterInv){
-  const o = DW_O;
-  const rows = filterInv ? o.rows.filter(r => str(r["TXNName"]) === filterInv) : o.rows;
-  $("dwItems").innerHTML = `<div class="dsec" style="margin-top:16px">${filterInv ? `Items of invoice ${esc(filterInv)}` : "All items"} <span class="pill p-neu">${rows.length}</span>
-      ${filterInv ? `<button class="sec" id="dwAllItems" type="button" style="padding:3px 10px;font-size:12px;margin-left:8px">Show all items</button>` : ""}</div>` +
-    (rows.length ? miniTable(rows, o.hide) : `<div class="empty">None.</div>`);
-  if (filterInv) $("dwAllItems").onclick = () => { drawItems(null); markInv(null); };
-}
-function markInv(inv){ $("dwB").querySelectorAll("tr.ir").forEach(tr => tr.classList.toggle("sel", tr.dataset.inv === inv)); }
-function openDrawer(o){
-  DW_O = o;
-  $("dwT").textContent = o.title; $("dwS").textContent = o.sub || "";
-  DW_ROWS = o.rows.concat(o.extraRows || []); DW_NAME = o.title;
-  const nInv = invCount(o.rows);
-  $("dwB").innerHTML =
-    `<div class="dstats">${o.stats.map(([l, v, c]) => `<div class="dstat ${c || ""}"><div class="l">${l}</div><div class="v num">${v}</div></div>`).join("")}</div>` +
-    (o.lists && o.lists.join("") ? `<div class="dsplit">${o.lists.join("")}</div>` : "") +
-    `<div class="dsec">${esc(o.listTitle || "Leakage invoices")} <span class="pill p-neu">${invs(nInv)} · ${items(o.rows.length)}</span> <span style="font-size:12px;color:var(--muted);font-weight:500;margin-left:6px">click an invoice to see its items</span></div>` +
-    (o.rows.length ? invTable(o.rows, o.hide) : `<div class="empty">None.</div>`) +
-    `<div id="dwItems"></div>` +
-    (o.extraRows && o.extraRows.length ? `<div class="dsec" style="margin-top:16px">${esc(o.extraTitle)} <span class="pill p-warn">${invs(invCount(o.extraRows))} · ${items(o.extraRows.length)}</span></div>` + invTable(o.extraRows, o.hide) : "");
-  if (o.rows.length) drawItems(null);
-  $("dwB").querySelectorAll("tr.ir").forEach(tr => tr.onclick = () => {
-    if (!o.rows.some(r => str(r["TXNName"]) === tr.dataset.inv)) return;
-    drawItems(tr.dataset.inv); markInv(tr.dataset.inv);
-    $("dwItems").scrollIntoView({behavior: "smooth", block: "start"});
-  });
-  $("dwB").scrollTop = 0;
-  $("ov").classList.add("on"); $("dw").classList.add("on"); $("dw").setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-}
-function closeDrawer(){ $("ov").classList.remove("on"); $("dw").classList.remove("on"); $("dw").setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; }
-$("ov").onclick = closeDrawer; $("dwX").onclick = closeDrawer;
-document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
-$("dwDl").onclick = () => {
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, toSheet(invoiceRows(DW_ROWS)), "Invoices");
-  XLSX.utils.book_append_sheet(wb, toSheet(DW_ROWS.map(lineRow)), "Items");
-  XLSX.writeFile(wb, `Discount_Radar_${DW_NAME.replace(/[^A-Za-z0-9]+/g, "_").slice(0, 40)}.xlsx`);
-};
+$("sq").addEventListener("input", () => renderCards());
 
-function openEntity(gk, key, g){
-  const G = GROUPS[gk];
-  const all = REPORT.df.filter(r => G.key(r) === key);
-  const ex = all.filter(r => r._res === "EXTRA DISCOUNT"), ap = all.filter(r => r._res === "APPROVAL IN REMARK");
-  const lists = [];
-  if (gk !== "prod") lists.push(listBox("Top products", topBy(ex, r => famName(r["Product Family"]))));
-  if (gk === "branch" || gk === "prod" || gk === "day") lists.push(listBox(gk === "branch" ? "Top executives" : "Top branches", topBy(ex, r => gk === "branch" ? str(r["Executive"]) : str(r["Branch ID"]))));
-  lists.push(listBox("Offer rules broken", topBy(ex, r => r._rule ? r._rule.product : "")));
-  openDrawer({
-    title: g.label, sub: [g.sub, GROUPS[gk].title.split("·")[1]?.trim()].filter(Boolean).join(" · "),
-    stats: [["Leakage", rs(g.x), "bad"], ["Leakage invoices", inr(g.xinv.size)], ["Leakage items", inr(g.xn)], ["Invoices checked", inr(g.inv.size)], ["Discount given", lakh(g.act)], ["Approval noted", g.a ? lakh(g.a) + " · " + g.ainv.size + " inv" : "–", g.a ? "warn" : ""]],
-    lists, rows: ex, listTitle: "Leakage invoices", extraRows: ap, extraTitle: "Extra discount with approval in remark",
-    hide: gk === "branch" ? ["Branch ID"] : gk === "exec" ? ["Branch ID","Executive"] : []
-  });
+/* modal navigation: {store} -> {store, cat} -> {store, cat, exec} ; or {list: ...} for KPI boxes */
+let NAV = null, MD_ROWS = [], MD_NAME = "";
+function scopeRows(n){
+  let rows = REPORT.df.filter(r => str(r["Branch ID"]) === n.store);
+  if (n.cat) rows = rows.filter(CATS[n.cat].test);
+  if (n.exec) rows = rows.filter(r => str(r["Executive"]) === n.exec);
+  return rows;
 }
+function crumbs(n){
+  const parts = [];
+  if (n.list) return "";
+  parts.push(`<a data-go='${esc(JSON.stringify({store: n.store}))}'>${esc(n.store)}</a>`);
+  if (n.cat) parts.push(`<a data-go='${esc(JSON.stringify({store: n.store, cat: n.cat}))}'>${CATS[n.cat].label}</a>`);
+  if (n.exec) parts.push(`<span>${esc(n.exec)}</span>`);
+  return parts.join(" › ");
+}
+function invoiceCards(rows){
+  // rows: all rows in scope; show invoices that have leakage or approval
+  const show = rows.filter(r => r._res === "EXTRA DISCOUNT" || r._res === "APPROVAL IN REMARK" || r._res === "No Rule Found" || r._res === "DEMO STOCK" || r._res === "CHECK MRP");
+  const m = new Map();
+  show.forEach(r => { const t = str(r["TXNName"]); if (!m.has(t)) m.set(t, []); m.get(t).push(r); });
+  const list = [...m.entries()].map(([t, rs_]) => {
+    const all = REPORT.df.filter(r => str(r["TXNName"]) === t);   // every in-scope item of that invoice
+    return {t, rows: rs_, all, x: sum(rs_.filter(r => r._res === "EXTRA DISCOUNT"), r => r._extra), a: sum(rs_.filter(r => r._res === "APPROVAL IN REMARK"), r => r._extra)};
+  }).sort((p, q) => q.x - p.x || q.a - p.a);
+  if (!list.length) return `<div class="empty">No invoice with leakage here – everything is within the offer.</div>`;
+  return `<div class="invs">${list.map(v => {
+    const r0 = v.rows[0], kind = v.x ? "lk" : v.a ? "ap" : "";
+    const prods = [...new Set(v.rows.map(r => famName(r["Product Family"]) || str(r["Item_Name"])))].join(", ");
+    const ir = str(r0["Internal Remark"]), rm = str(r0["Remark"]);
+    return `<div class="inv ${kind}">
+      <div class="invh">
+        <div class="no">${esc(v.t)}<small>${niceDate(ymd(r0._date))} · ${esc(r0["Executive"])} · ${r0._pay}</small></div>
+        <div class="pr">${esc(prods)}<small>${items(v.rows.length)} flagged${v.all.length > v.rows.length ? ` · ${v.all.length} on invoice` : ""}</small></div>
+        <div><div class="k">Discount given</div><div class="v">${rs(sum(v.rows, r => r._disc || 0))}</div></div>
+        <div><div class="k">Allowed</div><div class="v">${rs(sum(v.rows, r => r._allow || 0))}</div></div>
+        <div><div class="k">${v.x ? "Leakage" : v.a ? "Approval noted" : "Status"}</div><div class="v ${v.x ? "x" : ""}">${v.x ? rs(v.x) : v.a ? rs(v.a) : esc(RES_LABEL[r0._res] || r0._res)}</div></div>
+        <div class="ar">›</div>
+      </div>
+      ${ir || rm ? `<div class="invr">${ir ? `<b>Internal remark:</b> ${esc(ir)} ` : ""}${rm ? `<b>Remark:</b> ${esc(rm)}` : ""}</div>` : ""}
+      <div class="itms">${v.all.map(r => `<div class="itm">
+          <div class="n">${esc(r["Item_Name"])}<small>${esc(r._rule ? r._rule.product : "No offer rule")} · ${esc(RES_LABEL[r._res] || r._res)}</small></div>
+          <div class="c"><small>MRP</small>${rs(r._unitMrp)}</div>
+          <div class="c"><small>Given</small>${rs(r._disc)}</div>
+          <div class="c"><small>Allowed</small>${r._allow == null ? "–" : rs(r._allow)}</div>
+          <div class="c ${r._res === "EXTRA DISCOUNT" ? "x" : ""}"><small>Extra</small>${r._extra > 0 ? rs(r._extra) : "–"}</div>
+        </div>`).join("")}</div>
+    </div>`;
+  }).join("")}</div>`;
+}
+function renderModal(){
+  const n = NAV, B = $("mdB");
+  $("mdBack").classList.toggle("hide", !(n.cat || n.exec));
+  $("mdC").innerHTML = crumbs(n);
+  let html = "";
+  if (n.list){                                  // KPI box lists
+    $("mdT").textContent = n.title;
+    MD_ROWS = n.rows; MD_NAME = n.title;
+    html = statsBox(stat(n.rows)) + `<div class="lvl">Invoices <span>click an invoice to see its items</span></div>` + invoiceCards(n.rows);
+  } else {
+    const rows = scopeRows(n); MD_ROWS = rows; const st = stat(rows);
+    if (!n.cat){                                // level 1: store -> categories
+      $("mdT").textContent = n.store; MD_NAME = n.store;
+      const city = str((rows[0] || {})["Branch City"]);
+      html = statsBox(st) + `<div class="lvl">Choose a category ${city ? `<span>${esc(city)}</span>` : ""}</div><div class="cats">` +
+        Object.entries(CATS).map(([k, c]) => {
+          const cr = rows.filter(c.test), cs = stat(cr), execs = new Set(cr.filter(r => r._res === "EXTRA DISCOUNT").map(r => str(r["Executive"]))).size;
+          return `<button class="cat ${cr.length ? "" : "dis"}" data-cat="${k}" ${cr.length ? "" : "disabled"}>
+            <div class="ch"><span class="ci">${c.icon}</span>${c.label}</div>
+            <div class="am num ${cs.x ? "" : "z"}">${cs.x ? rs(cs.x) : (cr.length ? "No leakage" : "No sales")}</div>
+            <div class="mt">${cs.x ? `<b>${invs(cs.xinv)}</b> with leakage · ${items(cs.xn)}` : ""} ${cr.length ? `· ${invs(cs.inv)} checked` : ""}</div>
+            <div class="ft">${execs ? `<span class="chip">${execs} executive${execs === 1 ? "" : "s"} involved</span>` : ""}${cs.a ? `<span class="chip w">${lakh(cs.a)} approval · ${invs(cs.ainv)}</span>` : ""}<span class="chip">Discount given ${lakh(cs.act)}</span></div>
+            ${cr.length ? `<div class="go">See executives →</div>` : ""}
+          </button>`;
+        }).join("") + `</div>`;
+    } else if (!n.exec){                        // level 2: executives
+      $("mdT").textContent = `${CATS[n.cat].label} · executives`; MD_NAME = `${n.store}_${CATS[n.cat].label}`;
+      const m = new Map(); rows.forEach(r => { const e = str(r["Executive"]) || "–"; if (!m.has(e)) m.set(e, []); m.get(e).push(r); });
+      const ex = [...m.entries()].map(([e, rr]) => ({e, st: stat(rr)})).sort((a, b) => b.st.x - a.st.x || b.st.a - a.st.a || a.e.localeCompare(b.e));
+      const tot = st.x || 1;
+      html = statsBox(st) + `<div class="lvl">Executives <span>${ex.filter(e => e.st.x).length} with leakage · ${ex.length} billed</span></div><div class="gcards">` +
+        ex.map((e, i) => `<button class="gc ${e.st.x ? "" : "ok"}" data-exec="${esc(e.e)}">
+          ${e.st.x ? `<span class="rk">#${i + 1}</span>` : `<span class="rk" style="color:var(--good)">✓</span>`}
+          <span class="nm">${esc(e.e)}</span><span class="sb">${invs(e.st.inv)} billed</span>
+          <span class="am num">${e.st.x ? lakh(e.st.x) : "No leakage"}</span>
+          <span class="mt">${e.st.x ? `<b>${invs(e.st.xinv)}</b> with leakage · ${items(e.st.xn)}` : "within offer"}</span>
+          <span class="sh"><i style="width:${Math.max(e.st.x / tot * 100, e.st.x ? 1.5 : 0).toFixed(1)}%"></i></span>
+          <span class="ft"><span>${e.st.x ? (e.st.x / tot * 100).toFixed(0) + "% of this leakage" : ""}</span>${e.st.a ? `<span class="ap">+${lakh(e.st.a)} approval</span>` : ""}</span>
+        </button>`).join("") + `</div>`;
+    } else {                                    // level 3: invoices
+      $("mdT").textContent = n.exec; MD_NAME = `${n.store}_${n.exec}`;
+      html = statsBox(st) + `<div class="lvl">Invoices <span>click an invoice to see its items</span></div>` + invoiceCards(rows);
+    }
+  }
+  B.innerHTML = html; B.scrollTop = 0;
+  B.querySelectorAll(".cat[data-cat]").forEach(b => b.onclick = () => go({store: n.store, cat: b.dataset.cat}));
+  B.querySelectorAll(".gc[data-exec]").forEach(b => b.onclick = () => go({store: n.store, cat: n.cat, exec: b.dataset.exec}));
+  B.querySelectorAll(".invh").forEach(h => h.onclick = () => h.parentElement.classList.toggle("open"));
+  $("mdC").querySelectorAll("a[data-go]").forEach(a => a.onclick = () => go(JSON.parse(a.dataset.go)));
+}
+function go(n){ NAV = n; renderModal(); }
+function openModal(n){ go(n); $("ov").classList.add("on"); document.body.style.overflow = "hidden"; }
+function closeModal(){ $("ov").classList.remove("on"); document.body.style.overflow = ""; }
+const closeDrawer = closeModal;
+$("ov").addEventListener("click", e => { if (e.target === $("ov")) closeModal(); });
+$("mdX").onclick = closeModal;
+$("mdBack").onclick = () => { const n = NAV; if (n.exec) go({store: n.store, cat: n.cat}); else if (n.cat) go({store: n.store}); };
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+$("mdDl").onclick = () => {
+  const rows = MD_ROWS.filter(r => r._res !== "Within Offer").length ? MD_ROWS : MD_ROWS;
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, toSheet(invoiceRows(rows.filter(r => r._res === "EXTRA DISCOUNT"))), "Leakage invoices");
+  XLSX.utils.book_append_sheet(wb, toSheet(rows.map(lineRow)), "All items");
+  XLSX.writeFile(wb, `Discount_Radar_${MD_NAME.replace(/[^A-Za-z0-9]+/g, "_").slice(0, 50)}.xlsx`);
+};
 
 function renderDashboard(){
   const k = REPORT.kpi, df = REPORT.df;
   const period = k.from === k.to ? niceDate(k.from) : `${niceDate(k.from)} – ${niceDate(k.to)}`;
   $("heroV").textContent = rs(k.exV);
-  $("heroP").innerHTML = `<b>${invs(k.exInv)}</b> (${items(k.ex)}) got more discount than the offer allowed, without any approval noted. That is <b>${(k.exPct * 100).toFixed(2)}%</b> of the MRP value checked, across <b>${k.exBranches}</b> of ${k.branches} branches.`;
+  $("heroP").innerHTML = `<b>${invs(k.exInv)}</b> (${items(k.ex)}) got more discount than the offer allowed, without any approval noted. That is <b>${(k.exPct * 100).toFixed(2)}%</b> of the MRP value checked, across <b>${k.exBranches}</b> of ${k.branches} stores.`;
   $("heroD").textContent = `${period} · ${invs(k.inv)} checked · click to see all`;
   const within = df.filter(r => r._res === "Within Offer").length;
   $("minis").innerHTML = [
@@ -998,28 +1071,12 @@ function renderDashboard(){
     ["Needs attention", inr(k.noRule + k.demo + k.chk), `${k.noRule} no rule · ${k.demo} demo · ${k.chk} MRP check`, "clk", "attn"]
   ].map(([l, v, s, c, id]) => `<div class="mini ${c}" ${id ? `data-open="${id}"` : ""}><div class="l">${l}</div><div class="v num">${v}</div><div class="s">${s}</div>${id ? `<div class="go">View invoices →</div>` : ""}</div>`).join("");
   $("minis").querySelectorAll("[data-open]").forEach(el => el.onclick = () => {
-    if (el.dataset.open === "appr"){
-      const ap = df.filter(r => r._res === "APPROVAL IN REMARK");
-      openDrawer({title: "Approval noted in remark", sub: "Extra discount where the remark mentions an approval – verify each one",
-        stats: [["Extra discount", rs(k.apV), "warn"], ["Invoices", inr(k.apInv)], ["Items", inr(k.ap)], ["Branches", inr(new Set(ap.map(r => r["Branch ID"])).size)]],
-        lists: [listBox("By branch", topBy(ap, r => str(r["Branch ID"]))), listBox("By product", topBy(ap, r => famName(r["Product Family"])))],
-        rows: ap, listTitle: "Invoices"});
-    } else {
-      const at = df.filter(r => ["No Rule Found","DEMO STOCK","CHECK MRP"].includes(r._res));
-      openDrawer({title: "Needs attention", sub: "No rule = add a row in the master · Demo = demo stock · Check MRP = bill MRP above item list",
-        stats: [["No rule", inr(k.noRule)], ["Demo stock", inr(k.demo)], ["Check MRP", inr(k.chk)]], lists: [], rows: at, listTitle: "Invoices"});
-    }
+    if (el.dataset.open === "appr") openModal({list: 1, title: "Approval noted in remark", rows: df.filter(r => r._res === "APPROVAL IN REMARK")});
+    else openModal({list: 1, title: "Needs attention", rows: df.filter(r => ["No Rule Found","DEMO STOCK","CHECK MRP"].includes(r._res))});
   });
-  $("heroCard").onclick = () => {
-    const ex = df.filter(r => r._res === "EXTRA DISCOUNT");
-    openDrawer({title: "All leakage invoices", sub: period,
-      stats: [["Leakage", rs(k.exV), "bad"], ["Invoices", inr(k.exInv)], ["Items", inr(k.ex)], ["Branches", inr(k.exBranches)], ["% of MRP value", (k.exPct * 100).toFixed(2) + "%"]],
-      lists: [listBox("Top branches", topBy(ex, r => str(r["Branch ID"]))), listBox("Top products", topBy(ex, r => famName(r["Product Family"]))), listBox("Offer rules broken", topBy(ex, r => r._rule.product))],
-      rows: ex, listTitle: "Leakage invoices"});
-  };
-  $("segDay").classList.toggle("hide", REPORT.T["By Date"].length < 2);
-  if (curGroup === "day" && REPORT.T["By Date"].length < 2) curGroup = "branch";
-  showAll = false; renderCards();
+  $("heroCard").onclick = () => openModal({list: 1, title: "All leakage invoices", rows: df.filter(r => r._res === "EXTRA DISCOUNT")});
+  $("sq").value = "";
+  renderCards();
 }
 
 /* tooltip */
@@ -1101,8 +1158,6 @@ function renderTable(){
   };
   $("tnote").textContent = notes[curTab] || "";
 }
-$("q").addEventListener("input", renderTable);
-$("allCols").addEventListener("change", renderTable);
 
 /* ======================= EXCEL EXPORT ======================= */
 /* ======================= EXCEL EXPORT ======================= */
@@ -1148,7 +1203,7 @@ $("runBtn").onclick = () => {
       const t0 = performance.now();
       build();
       curTab = "Leakage Invoices"; sortCol = null;
-      renderDashboard(); renderTabs(); renderTable();
+      renderDashboard();
       $("results").classList.remove("hide");
       ["dlBtn","changeBtn","printBtn"].forEach(id => $(id).classList.remove("hide"));
       $("upl").classList.add("compact"); $("filesline").innerHTML = filesSummary();
