@@ -107,6 +107,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .heroL p b{color:var(--ink)}
 .period{display:inline-block;margin-top:12px;font-size:12px;color:var(--muted);background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:3px 10px}
 .minis{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.heroL.clk:hover{border-color:var(--leak)}
 .mini{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)}
 .mini .l{font-size:12px;color:var(--muted);font-weight:500}
 .mini .v{font-size:24px;font-weight:750;margin-top:2px;letter-spacing:-.02em}
@@ -157,6 +158,56 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .cb .t{font-size:11.5px;color:var(--ink2);margin-bottom:4px;font-weight:600}
 .cb .d{font-size:11.5px;color:var(--muted);margin-top:6px;white-space:nowrap}
 
+
+/* group cards */
+.segs{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg{background:transparent;color:var(--muted);border:0;border-radius:7px;padding:6px 14px;font:600 13px Inter,sans-serif}
+.seg.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.gcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.gc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px;cursor:pointer;text-align:left;color:var(--ink);font:inherit;display:flex;flex-direction:column;gap:2px;transition:border-color .15s,transform .15s,box-shadow .15s;position:relative}
+.gc:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 18px rgba(16,24,40,.08)}
+.gc:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gc .rk{position:absolute;top:12px;right:12px;font-size:11px;font-weight:700;color:var(--muted);background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:1px 8px}
+.gc .nm{font-weight:650;font-size:14px;padding-right:44px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gc .sb{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:18px}
+.gc .am{font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--leak);margin-top:6px}
+.gc .mt{font-size:12px;color:var(--ink2)}
+.gc .sh{height:5px;background:var(--track);border-radius:3px;margin-top:10px;overflow:hidden}
+.gc .sh i{display:block;height:100%;background:var(--leak);border-radius:3px}
+.gc .ft{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--muted);margin-top:6px;gap:6px}
+.gc .ap{color:var(--warn);background:var(--warn-bg);border-radius:20px;padding:0 7px;font-weight:600;white-space:nowrap}
+.gc.zero .am{color:var(--good)}
+.more{margin-top:12px;text-align:center}
+.clk{cursor:pointer;transition:border-color .15s}
+.clk:hover{border-color:var(--accent)}
+.clk .go{font-size:11.5px;color:var(--accent);font-weight:600;margin-top:4px}
+
+/* drawer */
+#ov{position:fixed;inset:0;background:rgba(10,15,30,.45);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+#ov.on{opacity:1;pointer-events:auto}
+#dw{position:fixed;top:0;right:0;bottom:0;width:min(980px,100%);background:var(--bg);z-index:61;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.2)}
+#dw.on{transform:none}
+.dwh{background:linear-gradient(120deg,#0f1d47 0%,#1d3a8a 70%,#2a5bd7 100%);color:#fff;padding:18px 20px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.dwh .t{font-size:19px;font-weight:800;letter-spacing:-.02em}
+.dwh .s{font-size:12.5px;color:#c7d4f5;margin-top:2px}
+.dwh .b{display:flex;gap:8px;flex:none}
+.dwb{overflow:auto;padding:16px 20px 30px;flex:1}
+.dstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.dstat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.dstat .l{font-size:11.5px;color:var(--muted)}
+.dstat .v{font-size:20px;font-weight:750;letter-spacing:-.02em}
+.dstat.bad .v{color:var(--leak)} .dstat.warn .v{color:var(--warn)}
+.dsplit{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:14px}
+.dlist{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.dlist h3{font-size:13px;margin:0 0 8px}
+.dli{display:grid;grid-template-columns:1fr auto;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px dashed var(--line)}
+.dli:last-child{border-bottom:0}
+.dli span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dli b{font-weight:650}
+.dli small{color:var(--muted);font-weight:400;margin-left:6px}
+.dsec{font-size:14px;font-weight:700;margin:6px 0 8px}
+.dw-t .tw{max-height:none}
+
 /* tooltip */
 #tip{position:fixed;pointer-events:none;z-index:50;background:#101828;color:#fff;font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:320px;opacity:0;transition:opacity .08s;white-space:pre-line}
 #tip.on{opacity:1}
@@ -206,7 +257,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
 @media print{
   body{background:#fff}
   header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .hbtns,.upl,#detail,footer{display:none!important}
+  .hbtns,.upl,#detail,footer,.segs,.more,#ov,#dw{display:none!important}
   .card,.heroL,.mini{box-shadow:none;break-inside:avoid}
   .strip div,.fl,.dot,.c,.dline,.lg i,.heroL:before{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .grid2{grid-template-columns:1fr 1fr}
@@ -277,7 +328,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
 
 <section id="results" class="hide">
   <div class="hero">
-    <div class="heroL">
+    <div class="heroL clk" id="heroCard" title="Click to see all leakage bills">
       <div class="eyebrow">Discount leakage · beyond offer, no approval</div>
       <div class="big num" id="heroV">₹0</div>
       <p id="heroP"></p>
@@ -287,15 +338,16 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
   </div>
 
 
-  <div class="grid2">
-    <div class="card"><div class="ct"><h2>Top branches by leakage</h2><span>extra discount, ₹</span></div><div class="bars" id="cBranch"></div></div>
-    <div class="card"><div class="ct"><h2>Offer vs bill, on leaking bills</h2><span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--allow)"></i> allowed &nbsp; <i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--leak)"></i> given</span></div><div class="db" id="cRule"></div><div class="daxis" id="cRuleAx"></div></div>
+  <div class="card">
+    <div class="ct"><h2 id="gTitle">Where the leakage is</h2>
+      <div class="segs" id="segs">
+        <button class="seg on" data-g="branch">Branches</button><button class="seg" data-g="exec">Executives</button><button class="seg" data-g="prod">Products</button><button class="seg hide" data-g="day" id="segDay">Days</button>
+      </div>
+    </div>
+    <div class="gcards" id="gcards"></div>
+    <div class="more"><button class="sec hide" id="moreBtn" type="button"></button></div>
+    <div class="note">Click any card to see its bills.</div>
   </div>
-  <div class="grid2">
-    <div class="card"><div class="ct"><h2>Leakage by product line</h2><span>extra discount, ₹</span></div><div class="bars" id="cLob"></div></div>
-    <div class="card"><div class="ct"><h2>Top executives by leakage</h2><span>extra discount, ₹</span></div><div class="bars" id="cExec"></div></div>
-  </div>
-  <div class="card hide" id="dayCard"><div class="ct"><h2>Leakage by day</h2><span>extra discount, ₹</span></div><div class="cols" id="cDay"></div></div>
 
   <div class="card" id="detail">
     <div class="ct"><h2>Detail</h2><span>click a column header to sort</span></div>
@@ -312,6 +364,12 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
 </div></main>
 <footer>Discount Radar · runs fully in your browser</footer>
 <div id="tip"></div>
+<div id="ov"></div>
+<aside id="dw" aria-hidden="true">
+  <div class="dwh"><div><div class="t" id="dwT"></div><div class="s" id="dwS"></div></div>
+    <div class="b"><button class="hbtn" id="dwDl" type="button">Download these bills</button><button class="hbtn" id="dwX" type="button" aria-label="Close">✕</button></div></div>
+  <div class="dwb" id="dwB"></div>
+</aside>
 
 <script>
 /* ======================= DEFAULT SETTINGS ======================= */
@@ -761,74 +819,146 @@ const rs = x => "₹" + inr(x);
 const bills = n => `${inr(n)} bill${n === 1 ? "" : "s"}`;
 const niceDate = s => { if (!s) return ""; const d = new Date(s + "T00:00:00"); return d.toLocaleDateString("en-IN", {day:"numeric", month:"short", year:"numeric"}); };
 
-function hbars(el, items, emptyMsg){
-  if (!items.length){ el.innerHTML = `<div class="empty">${emptyMsg || "No leakage found."}</div>`; return; }
-  const max = Math.max(...items.map(i => i.value)) || 1;
-  el.innerHTML = items.map(i => `<div class="br" data-tip="${esc(i.tip)}">
-      <div class="lb">${esc(i.label)}${i.sub ? `<small>${esc(i.sub)}</small>` : ""}</div>
-      <div class="tr"><div class="fl" style="width:${(i.value / max * 100).toFixed(2)}%"></div></div>
-      <div class="vl num">${lakh(i.value)}</div></div>`).join("");
+
+/* ---------- groups & cards ---------- */
+const famName = f => str(f).replace(/\/\s*$/, "").trim() || "Other";
+const GROUPS = {
+  branch: {title: "Where the leakage is · by branch", key: r => str(r["Branch ID"]), label: r => str(r["Branch ID"]), sub: r => str(r["Branch City"])},
+  exec:   {title: "Where the leakage is · by executive", key: r => str(r["Branch ID"]) + "|" + str(r["Executive"]), label: r => str(r["Executive"]), sub: r => str(r["Branch ID"])},
+  prod:   {title: "Where the leakage is · by product", key: r => famName(r["Product Family"]), label: r => famName(r["Product Family"]), sub: r => str(r["LOB"])},
+  day:    {title: "Where the leakage is · by day", key: r => ymd(r._date), label: r => niceDate(ymd(r._date)), sub: r => ""}
+};
+let curGroup = "branch", showAll = false;
+
+function aggregate(gk){
+  const G = GROUPS[gk], m = new Map();
+  REPORT.df.forEach(r => {
+    const k = G.key(r);
+    if (!m.has(k)) m.set(k, {key: k, label: G.label(r), sub: G.sub(r), n: 0, x: 0, xn: 0, a: 0, an: 0, act: 0});
+    const g = m.get(k);
+    g.n++; g.act += r._disc || 0;
+    if (r._res === "EXTRA DISCOUNT"){ g.x += r._extra; g.xn++; }
+    if (r._res === "APPROVAL IN REMARK"){ g.a += r._extra; g.an++; }
+  });
+  return [...m.values()];
+}
+function renderCards(){
+  const G = GROUPS[curGroup], tot = REPORT.kpi.exV || 1;
+  $("gTitle").textContent = G.title;
+  document.querySelectorAll(".seg").forEach(b => b.classList.toggle("on", b.dataset.g === curGroup));
+  let list = aggregate(curGroup).filter(g => g.x > 0 || g.a > 0);
+  if (curGroup === "day") list.sort((p, q) => p.key < q.key ? -1 : 1); else list.sort((p, q) => q.x - p.x || q.a - p.a);
+  const total = list.length, LIMIT = 12;
+  const shown = showAll ? list : list.slice(0, LIMIT);
+  $("gcards").innerHTML = shown.length ? shown.map((g, i) => `<button class="gc ${g.x ? "" : "zero"}" data-k="${esc(g.key)}">
+      ${curGroup === "day" ? "" : `<span class="rk">#${i + 1}</span>`}
+      <span class="nm">${esc(g.label)}</span><span class="sb">${esc(g.sub || "")}</span>
+      <span class="am num">${g.x ? lakh(g.x) : "₹0"}</span>
+      <span class="mt">${bills(g.xn)} with leakage · ${inr(g.n)} checked</span>
+      <span class="sh"><i style="width:${Math.max(g.x / tot * 100, g.x ? 1.5 : 0).toFixed(1)}%"></i></span>
+      <span class="ft"><span>${(g.x / tot * 100).toFixed(1)}% of total leakage</span>${g.a ? `<span class="ap">+${lakh(g.a)} approval</span>` : ""}</span>
+    </button>`).join("") : `<div class="empty">No leakage found.</div>`;
+  $("moreBtn").classList.toggle("hide", total <= LIMIT);
+  $("moreBtn").textContent = showAll ? "Show top 12" : `Show all ${total}`;
+  $("gcards").querySelectorAll(".gc").forEach(b => b.onclick = () => {
+    const k = b.dataset.k, g = list.find(x => x.key === k);
+    openEntity(curGroup, k, g);
+  });
+}
+$("segs").addEventListener("click", e => { const b = e.target.closest(".seg"); if (!b) return; curGroup = b.dataset.g; showAll = false; renderCards(); });
+$("moreBtn").onclick = () => { showAll = !showAll; renderCards(); };
+
+/* ---------- drawer ---------- */
+let DW_ROWS = [], DW_NAME = "";
+function topBy(rows, keyFn, n){
+  const m = new Map();
+  rows.forEach(r => { const k = keyFn(r) || "–"; const g = m.get(k) || {k, x: 0, n: 0}; g.x += r._extra || 0; g.n++; m.set(k, g); });
+  return [...m.values()].sort((a, b) => b.x - a.x).slice(0, n || 6);
+}
+function listBox(title, items){
+  if (!items.length) return "";
+  return `<div class="dlist"><h3>${esc(title)}</h3>${items.map(i => `<div class="dli"><span>${esc(i.k)}</span><b class="num">${lakh(i.x)}<small>${bills(i.n)}</small></b></div>`).join("")}</div>`;
+}
+const DW_COLS = ["Date","Branch ID","Invoice","Executive","Item Name","Pay Mode","Unit MRP","Actual Disc (Rs)","Allowed Disc (Rs)","Extra Disc (Rs)","Offer Rule (PDF)","Result","Internal Remark","Remark"];
+function miniTable(rows, hide){
+  const cols = DW_COLS.filter(c => !(hide || []).includes(c));
+  const data = rows.map(lineRow).sort((a, b) => (b["Extra Disc (Rs)"] || 0) - (a["Extra Disc (Rs)"] || 0));
+  return `<div class="tw"><table><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${data.map(r => `<tr>${cols.map(c => cell(c, r[c])).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+function openDrawer(o){
+  $("dwT").textContent = o.title; $("dwS").textContent = o.sub || "";
+  DW_ROWS = o.rows.concat(o.extraRows || []); DW_NAME = o.title;
+  $("dwB").innerHTML =
+    `<div class="dstats">${o.stats.map(([l, v, c]) => `<div class="dstat ${c || ""}"><div class="l">${l}</div><div class="v num">${v}</div></div>`).join("")}</div>` +
+    (o.lists && o.lists.join("") ? `<div class="dsplit">${o.lists.join("")}</div>` : "") +
+    `<div class="dsec">${esc(o.listTitle || "Leakage bills")} <span class="pill p-neu">${o.rows.length}</span></div>` +
+    (o.rows.length ? miniTable(o.rows, o.hide) : `<div class="empty">None.</div>`) +
+    (o.extraRows && o.extraRows.length ? `<div class="dsec" style="margin-top:16px">${esc(o.extraTitle)} <span class="pill p-warn">${o.extraRows.length}</span></div>` + miniTable(o.extraRows, o.hide) : "");
+  $("dwB").scrollTop = 0;
+  $("ov").classList.add("on"); $("dw").classList.add("on"); $("dw").setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+function closeDrawer(){ $("ov").classList.remove("on"); $("dw").classList.remove("on"); $("dw").setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; }
+$("ov").onclick = closeDrawer; $("dwX").onclick = closeDrawer;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+$("dwDl").onclick = () => {
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, toSheet(DW_ROWS.map(lineRow)), "Bills");
+  XLSX.writeFile(wb, `Discount_Radar_${DW_NAME.replace(/[^A-Za-z0-9]+/g, "_").slice(0, 40)}.xlsx`);
+};
+
+function openEntity(gk, key, g){
+  const G = GROUPS[gk];
+  const all = REPORT.df.filter(r => G.key(r) === key);
+  const ex = all.filter(r => r._res === "EXTRA DISCOUNT"), ap = all.filter(r => r._res === "APPROVAL IN REMARK");
+  const lists = [];
+  if (gk !== "prod") lists.push(listBox("Top products", topBy(ex, r => famName(r["Product Family"]))));
+  if (gk === "branch" || gk === "prod" || gk === "day") lists.push(listBox(gk === "branch" ? "Top executives" : "Top branches", topBy(ex, r => gk === "branch" ? str(r["Executive"]) : str(r["Branch ID"]))));
+  lists.push(listBox("Offer rules broken", topBy(ex, r => r._rule ? r._rule.product : "")));
+  openDrawer({
+    title: g.label, sub: [g.sub, GROUPS[gk].title.split("·")[1]?.trim()].filter(Boolean).join(" · "),
+    stats: [["Leakage", rs(g.x), "bad"], ["Leakage bills", inr(g.xn)], ["Bills checked", inr(g.n)], ["Discount given", lakh(g.act)], ["Approval noted", g.a ? lakh(g.a) + " · " + g.an : "–", g.a ? "warn" : ""]],
+    lists, rows: ex, listTitle: "Leakage bills", extraRows: ap, extraTitle: "Extra discount with approval in remark",
+    hide: gk === "branch" ? ["Branch ID"] : gk === "exec" ? ["Branch ID","Executive"] : []
+  });
 }
 
 function renderDashboard(){
   const k = REPORT.kpi, df = REPORT.df;
   const period = k.from === k.to ? niceDate(k.from) : `${niceDate(k.from)} – ${niceDate(k.to)}`;
-
-  // hero
   $("heroV").textContent = rs(k.exV);
   $("heroP").innerHTML = `<b>${bills(k.ex)}</b> got more discount than the offer allowed, without any approval noted. That is <b>${(k.exPct * 100).toFixed(2)}%</b> of the MRP value checked, across <b>${k.exBranches}</b> of ${k.branches} branches.`;
-  $("heroD").textContent = `${period} · ${inr(k.lines)} bills checked`;
+  $("heroD").textContent = `${period} · ${inr(k.lines)} bills checked · click to see all`;
   const within = df.filter(r => r._res === "Within Offer").length;
   $("minis").innerHTML = [
-    ["Within offer", ((within / (k.matched || 1)) * 100).toFixed(1) + "%", `${inr(within)} of ${inr(k.matched)} bills`, "good"],
-    ["Total discount given", lakh(k.act), "on bills matched to an offer", ""],
-    ["Approval noted in remark", lakh(k.apV), `${bills(k.ap)} · verify, not in leakage`, "warn"],
-    ["Needs attention", inr(k.noRule + k.demo + k.chk), `${k.noRule} no rule · ${k.demo} demo · ${k.chk} MRP check`, ""]
-  ].map(([l, v, s, c]) => `<div class="mini ${c}"><div class="l">${l}</div><div class="v num">${v}</div><div class="s">${s}</div></div>`).join("");
-
-  // charts
-  const T = REPORT.T;
-  hbars($("cBranch"), T["By Branch"].filter(r => r["Extra Disc (Rs)"] > 0).slice(0, 10).map(r => ({
-    label: r["Branch ID"], value: r["Extra Disc (Rs)"],
-    tip: `${r["Branch ID"]}\nLeakage: ${rs(r["Extra Disc (Rs)"])} on ${bills(r["Extra Lines"])}\nBills checked: ${inr(r["Lines"])}\nDiscount given: ${rs(r["Actual Disc (Rs)"])}`
-  })));
-  hbars($("cLob"), T["By Model"].reduce((m, r) => { const k2 = r.LOB || "Other"; const g = m.find(x => x.label === k2) || (m.push({label: k2, value: 0, n: 0}), m[m.length - 1]); g.value += r["Extra Disc (Rs)"]; g.n += r["Extra Lines"]; return m; }, [])
-    .filter(g => g.value > 0).sort((a, b) => b.value - a.value).slice(0, 10)
-    .map(g => ({...g, tip: `${g.label}\nLeakage: ${rs(g.value)} on ${bills(g.n)}`})));
-  hbars($("cExec"), T["By Executive"].filter(r => r["Extra Disc (Rs)"] > 0).slice(0, 10).map(r => ({
-    label: r["Executive"], sub: r["Branch ID"], value: r["Extra Disc (Rs)"],
-    tip: `${r["Executive"]} · ${r["Branch ID"]}\nLeakage: ${rs(r["Extra Disc (Rs)"])} on ${bills(r["Extra Lines"])}\nBills: ${inr(r["Lines"])}`
-  })));
-
-  // dumbbell: per offer rule, on leaking bills only
-  const ex = df.filter(r => r._res === "EXTRA DISCOUNT");
-  const byRule = new Map();
-  ex.forEach(r => {
-    const g = byRule.get(r._rule.id) || {name: r._rule.product, n: 0, mrp: 0, act: 0, allow: 0, x: 0};
-    g.n++; g.mrp += r._mrpValue; g.act += r._disc; g.allow += r._allow; g.x += r._extra; byRule.set(r._rule.id, g);
+    ["Within offer", ((within / (k.matched || 1)) * 100).toFixed(1) + "%", `${inr(within)} of ${inr(k.matched)} bills`, "good", ""],
+    ["Total discount given", lakh(k.act), "on bills matched to an offer", "", ""],
+    ["Approval noted in remark", lakh(k.apV), `${bills(k.ap)} · verify, not in leakage`, "warn clk", "appr"],
+    ["Needs attention", inr(k.noRule + k.demo + k.chk), `${k.noRule} no rule · ${k.demo} demo · ${k.chk} MRP check`, "clk", "attn"]
+  ].map(([l, v, s, c, id]) => `<div class="mini ${c}" ${id ? `data-open="${id}"` : ""}><div class="l">${l}</div><div class="v num">${v}</div><div class="s">${s}</div>${id ? `<div class="go">View bills →</div>` : ""}</div>`).join("");
+  $("minis").querySelectorAll("[data-open]").forEach(el => el.onclick = () => {
+    if (el.dataset.open === "appr"){
+      const ap = df.filter(r => r._res === "APPROVAL IN REMARK");
+      openDrawer({title: "Approval noted in remark", sub: "Extra discount where the remark mentions an approval – verify each one",
+        stats: [["Extra discount", rs(k.apV), "warn"], ["Bills", inr(k.ap)], ["Branches", inr(new Set(ap.map(r => r["Branch ID"])).size)]],
+        lists: [listBox("By branch", topBy(ap, r => str(r["Branch ID"]))), listBox("By product", topBy(ap, r => famName(r["Product Family"])))],
+        rows: ap, listTitle: "Bills"});
+    } else {
+      const at = df.filter(r => ["No Rule Found","DEMO STOCK","CHECK MRP"].includes(r._res));
+      openDrawer({title: "Needs attention", sub: "No rule = add a row in the master · Demo = demo stock · Check MRP = bill MRP above item list",
+        stats: [["No rule", inr(k.noRule)], ["Demo stock", inr(k.demo)], ["Check MRP", inr(k.chk)]], lists: [], rows: at, listTitle: "Bills"});
+    }
   });
-  const rows = [...byRule.values()].sort((a, b) => b.x - a.x).slice(0, 8)
-    .map(g => ({...g, ap: g.allow / g.mrp, gp: g.act / g.mrp}));
-  if (!rows.length){ $("cRule").innerHTML = `<div class="empty">No leakage found.</div>`; $("cRuleAx").innerHTML = ""; }
-  else {
-    const mx = Math.max(...rows.map(r => Math.max(r.ap, r.gp))) * 1.08 || 0.01;
-    const P = v => (v / mx * 100).toFixed(2) + "%";
-    $("cRule").innerHTML = rows.map(r => `<div class="dr" data-tip="${esc(`${r.name}\nAllowed: ${(r.ap * 100).toFixed(1)}% · Given: ${(r.gp * 100).toFixed(1)}%\nLeakage: ${rs(r.x)} on ${bills(r.n)}`)}">
-        <div class="lb">${esc(r.name)}<small>${bills(r.n)} · ${lakh(r.x)} extra</small></div>
-        <div class="dtrack"><div class="dline" style="left:${P(Math.min(r.ap, r.gp))};width:calc(${P(Math.abs(r.gp - r.ap))})"></div>
-          <div class="dot a" style="left:${P(r.ap)}"></div><div class="dot x" style="left:${P(r.gp)}"></div></div></div>`).join("");
-    $("cRuleAx").innerHTML = `<div></div><div><span>0%</span><span>${(mx * 50).toFixed(1)}%</span><span>${(mx * 100).toFixed(1)}% of MRP</span></div>`;
-  }
-
-  // by day (only if more than one day)
-  const days = T["By Date"];
-  $("dayCard").classList.toggle("hide", days.length < 2);
-  if (days.length > 1){
-    const mx = Math.max(...days.map(d => d["Extra Disc (Rs)"])) || 1;
-    $("cDay").innerHTML = days.map(d => `<div class="cb" data-tip="${esc(`${niceDate(d.Date)}\nLeakage: ${rs(d["Extra Disc (Rs)"])} on ${d["Extra Lines"]} bills\nBills checked: ${inr(d.Lines)}`)}">
-      <div class="t num">${lakh(d["Extra Disc (Rs)"])}</div><div class="c" style="height:${(d["Extra Disc (Rs)"] / mx * 100).toFixed(1)}%"></div>
-      <div class="d">${new Date(d.Date + "T00:00:00").toLocaleDateString("en-IN", {day:"numeric", month:"short"})}</div></div>`).join("");
-  }
+  $("heroCard").onclick = () => {
+    const ex = df.filter(r => r._res === "EXTRA DISCOUNT");
+    openDrawer({title: "All leakage bills", sub: period,
+      stats: [["Leakage", rs(k.exV), "bad"], ["Bills", inr(k.ex)], ["Branches", inr(k.exBranches)], ["% of MRP value", (k.exPct * 100).toFixed(2) + "%"]],
+      lists: [listBox("Top branches", topBy(ex, r => str(r["Branch ID"]))), listBox("Top products", topBy(ex, r => famName(r["Product Family"]))), listBox("Offer rules broken", topBy(ex, r => r._rule.product))],
+      rows: ex, listTitle: "Leakage bills"});
+  };
+  $("segDay").classList.toggle("hide", REPORT.T["By Date"].length < 2);
+  if (curGroup === "day" && REPORT.T["By Date"].length < 2) curGroup = "branch";
+  showAll = false; renderCards();
 }
 
 /* tooltip */
