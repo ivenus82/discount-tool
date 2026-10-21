@@ -759,13 +759,13 @@ function build(){
   const salesRaw = sheetRows(files.sales.wb);
   const {rows, log, chk, removed} = cleanSales(salesRaw, S);
   const rules = loadRules(files.master.wb);
-  const items = sheetRows(files.items.wb);
-  const cCode = colIn(items, "Item Code"), cMrp = colIn(items, S.ilmrp);
-  const seen = Object.keys(items[0] || {}).slice(0, 25).join(", ") || "(no columns read)";
+  const itemRows = sheetRows(files.items.wb);
+  const cCode = colIn(itemRows, "Item Code"), cMrp = colIn(itemRows, S.ilmrp);
+  const seen = Object.keys(itemRows[0] || {}).slice(0, 25).join(", ") || "(no columns read)";
   if (!cCode) throw new Error(`Item List: 'Item Code' column not found. Columns read: ${seen}`);
   if (!cMrp) throw new Error(`Item List: MRP column '${S.ilmrp}' not found. Columns read: ${seen}`);
   const ilMap = new Map();
-  items.forEach(r => ilMap.set(str(r[cCode]).toUpperCase(), num(r[cMrp])));
+  itemRows.forEach(r => ilMap.set(str(r[cCode]).toUpperCase(), num(r[cMrp])));
 
   const df = runCheck(rows, rules, ilMap, S);
   const matched = df.filter(r => r._rule);
@@ -777,7 +777,7 @@ function build(){
     ["Sales rows in file", log.rowsInFile], ["Footer/blank rows removed", log.footer],
     ["Executives removed (rows)", log.removedExec], ["Branch rows mapped to main", log.mapped],
     ["Branch filter removed (rows)", log.removedBranch], ["Sales rows after cleaning", log.finalRows],
-    ["Active offer rules", rules.length], ["Item list rows", items.length],
+    ["Active offer rules", rules.length], ["Item list rows", itemRows.length],
     ["In-scope POS items", df.length], ["Matched with offer rule", matched.length],
     ["No rule found", df.filter(r => r._res === "No Rule Found").length],
     ["Check MRP", df.filter(r => r._res === "CHECK MRP").length],
@@ -898,9 +898,9 @@ function topBy(rows, keyFn, n){
   rows.forEach(r => { const k = keyFn(r) || "–"; const g = m.get(k) || {k, x: 0, n: 0, inv: new Set()}; g.x += r._extra || 0; g.n++; g.inv.add(str(r["TXNName"])); m.set(k, g); });
   return [...m.values()].sort((a, b) => b.x - a.x).slice(0, n || 6);
 }
-function listBox(title, items){
-  if (!items.length) return "";
-  return `<div class="dlist"><h3>${esc(title)}</h3>${items.map(i => `<div class="dli"><span>${esc(i.k)}</span><b class="num">${lakh(i.x)}<small>${inr(i.inv.size)} inv · ${items(i.n)}</small></b></div>`).join("")}</div>`;
+function listBox(title, list){
+  if (!list.length) return "";
+  return `<div class="dlist"><h3>${esc(title)}</h3>${list.map(i => `<div class="dli"><span>${esc(i.k)}</span><b class="num">${lakh(i.x)}<small>${inr(i.inv.size)} inv · ${items(i.n)}</small></b></div>`).join("")}</div>`;
 }
 const DW_COLS = ["Date","Branch ID","Invoice","Executive","Item Name","Pay Mode","Unit MRP","Actual Disc (Rs)","Allowed Disc (Rs)","Extra Disc (Rs)","Offer Rule (PDF)","Result","Internal Remark","Remark"];
 function miniTable(rows, hide){
