@@ -207,6 +207,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .dli small{color:var(--muted);font-weight:400;margin-left:6px}
 .dsec{font-size:14px;font-weight:700;margin:6px 0 8px}
 .dw-t .tw{max-height:none}
+tr.ir{cursor:pointer}
+tr.ir.sel td{background:var(--leak-bg)!important}
 
 /* tooltip */
 #tip{position:fixed;pointer-events:none;z-index:50;background:#101828;color:#fff;font-size:12.5px;line-height:1.45;padding:8px 10px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:320px;opacity:0;transition:opacity .08s;white-space:pre-line}
@@ -328,7 +330,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
 
 <section id="results" class="hide">
   <div class="hero">
-    <div class="heroL clk" id="heroCard" title="Click to see all leakage bills">
+    <div class="heroL clk" id="heroCard" title="Click to see all leakage invoices">
       <div class="eyebrow">Discount leakage · beyond offer, no approval</div>
       <div class="big num" id="heroV">₹0</div>
       <p id="heroP"></p>
@@ -346,7 +348,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
     </div>
     <div class="gcards" id="gcards"></div>
     <div class="more"><button class="sec hide" id="moreBtn" type="button"></button></div>
-    <div class="note">Click any card to see its bills.</div>
+    <div class="note">Click any card to see its invoices and items.</div>
   </div>
 
   <div class="card" id="detail">
@@ -367,7 +369,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
 <div id="ov"></div>
 <aside id="dw" aria-hidden="true">
   <div class="dwh"><div><div class="t" id="dwT"></div><div class="s" id="dwS"></div></div>
-    <div class="b"><button class="hbtn" id="dwDl" type="button">Download these bills</button><button class="hbtn" id="dwX" type="button" aria-label="Close">✕</button></div></div>
+    <div class="b"><button class="hbtn" id="dwDl" type="button">Download to Excel</button><button class="hbtn" id="dwX" type="button" aria-label="Close">✕</button></div></div>
   <div class="dwb" id="dwB"></div>
 </aside>
 
@@ -698,6 +700,21 @@ function runCheck(sales, rules, ilMap, S){
 }
 
 /* ======================= OUTPUT TABLES ======================= */
+function invoiceRows(rows){
+  const m = new Map();
+  rows.forEach(r => {
+    const t = str(r["TXNName"]);
+    if (!m.has(t)) m.set(t, {"Date": ymd(r._date), "Branch ID": r["Branch ID"], "Invoice": t, "Executive": r["Executive"],
+      "Items": 0, "Products": new Set(), "Pay Mode": r._pay, "MRP Value": 0, "Actual Disc (Rs)": 0, "Allowed Disc (Rs)": 0,
+      "Extra Disc (Rs)": 0, "Internal Remark": null, "Remark": null});
+    const g = m.get(t);
+    g.Items++; g.Products.add(str(r["Product Family"]).replace(/\/\s*$/, "") || str(r["Item_Name"]));
+    g["MRP Value"] += r._mrpValue || 0; g["Actual Disc (Rs)"] += r._disc || 0; g["Allowed Disc (Rs)"] += r._allow || 0; g["Extra Disc (Rs)"] += r._extra || 0;
+    if (!g["Internal Remark"] && str(r["Internal Remark"])) g["Internal Remark"] = r["Internal Remark"];
+    if (!g["Remark"] && str(r["Remark"])) g["Remark"] = r["Remark"];
+  });
+  return [...m.values()].map(g => ({...g, "Products": [...g.Products].join(", ")})).sort((a, b) => b["Extra Disc (Rs)"] - a["Extra Disc (Rs)"]);
+}
 function lineRow(r){
   return {
     "Date": ymd(r._date), "Branch ID": r["Branch ID"], "Invoice": r["TXNName"], "Executive": r["Executive"],
@@ -716,10 +733,10 @@ function groupSumm(df, keys){
   const m = new Map();
   df.filter(r => r._rule).forEach(r => {
     const k = keys.map(f => str(f(r))).join("\u0001");
-    if (!m.has(k)) m.set(k, {keys: keys.map(f => f(r)), lines:0, qty:0, mrp:0, act:0, allow:0, xl:0, x:0, al:0, a:0});
+    if (!m.has(k)) m.set(k, {keys: keys.map(f => f(r)), lines:0, qty:0, mrp:0, act:0, allow:0, xl:0, x:0, al:0, a:0, inv:new Set(), xinv:new Set()});
     const g = m.get(k);
-    g.lines++; g.qty += r._qty; g.mrp += r._mrpValue; g.act += r._disc; g.allow += r._allow;
-    if (r._res === "EXTRA DISCOUNT"){ g.xl++; g.x += r._extra; }
+    g.lines++; g.inv.add(str(r["TXNName"])); g.qty += r._qty; g.mrp += r._mrpValue; g.act += r._disc; g.allow += r._allow;
+    if (r._res === "EXTRA DISCOUNT"){ g.xl++; g.x += r._extra; g.xinv.add(str(r["TXNName"])); }
     if (r._res === "APPROVAL IN REMARK"){ g.al++; g.a += r._extra; }
   });
   return [...m.values()].sort((a, b) => b.x - a.x);
@@ -727,9 +744,9 @@ function groupSumm(df, keys){
 function summRows(df, spec){
   return groupSumm(df, spec.map(s => s[1])).map(g => {
     const o = {}; spec.forEach((s, i) => o[s[0]] = g.keys[i]);
-    return Object.assign(o, {"Lines": g.lines, "Qty": g.qty, "MRP Value": g.mrp, "Actual Disc (Rs)": g.act,
-      "Allowed Disc (Rs)": g.allow, "Extra Lines": g.xl, "Extra Disc (Rs)": g.x,
-      "Approval-in-Remark Lines": g.al, "Approval-in-Remark Disc (Rs)": g.a,
+    return Object.assign(o, {"Invoices": g.inv.size, "Items": g.lines, "Qty": g.qty, "MRP Value": g.mrp, "Actual Disc (Rs)": g.act,
+      "Allowed Disc (Rs)": g.allow, "Leakage Invoices": g.xinv.size, "Leakage Items": g.xl, "Extra Disc (Rs)": g.x,
+      "Approval-in-Remark Items": g.al, "Approval-in-Remark Disc (Rs)": g.a,
       "Actual Disc %": g.mrp ? g.act / g.mrp : null, "Extra Disc %": g.mrp ? g.x / g.mrp : null});
   });
 }
@@ -761,14 +778,16 @@ function build(){
     ["Executives removed (rows)", log.removedExec], ["Branch rows mapped to main", log.mapped],
     ["Branch filter removed (rows)", log.removedBranch], ["Sales rows after cleaning", log.finalRows],
     ["Active offer rules", rules.length], ["Item list rows", items.length],
-    ["In-scope POS lines", df.length], ["Matched with offer rule", matched.length],
+    ["In-scope POS items", df.length], ["Matched with offer rule", matched.length],
     ["No rule found", df.filter(r => r._res === "No Rule Found").length],
     ["Check MRP", df.filter(r => r._res === "CHECK MRP").length],
     ["Within offer", df.filter(r => r._res === "Within Offer").length],
     ["Demo stock (kept separate)", df.filter(r => r._res === "DEMO STOCK").length],
     ["Extra with approval in remark (lines)", df.filter(r => r._res === "APPROVAL IN REMARK").length],
     ["Extra with approval in remark (Rs)", Math.round(sum(df.filter(r => r._res === "APPROVAL IN REMARK"), r => r._extra))],
-    ["EXTRA DISCOUNT lines (no approval)", ex.length],
+    ["Invoices checked", invCount(df)],
+    ["EXTRA DISCOUNT invoices (no approval)", invCount(ex)],
+    ["EXTRA DISCOUNT items (no approval)", ex.length],
     ["MRP value (matched)", Math.round(mrpV)], ["Actual discount (matched)", Math.round(sum(matched, r => r._disc))],
     ["Allowed discount (matched)", Math.round(sum(matched, r => r._allow))], ["EXTRA DISCOUNT (Rs)", Math.round(exV)],
     ["Extra discount % of MRP", mrpV ? (exV / mrpV * 100).toFixed(2) + "%" : "0%"]
@@ -777,6 +796,7 @@ function build(){
   const dates = rows.map(r => r._date).filter(Boolean).sort((a, b) => a - b);
   const T = {
     "Approval in Remark": lines.filter(r => r.Result === "APPROVAL IN REMARK").sort((a, b) => b["Extra Disc (Rs)"] - a["Extra Disc (Rs)"]),
+    "Leakage Invoices": invoiceRows(df.filter(r => r._res === "EXTRA DISCOUNT")),
     "Extra Discount": lines.filter(r => r.Result === "EXTRA DISCOUNT").sort((a, b) => b["Extra Disc (Rs)"] - a["Extra Disc (Rs)"]),
     "By Branch": summRows(df, [["Branch ID", r => r["Branch ID"]]]),
     "By Executive": summRows(df, [["Branch ID", r => r["Branch ID"]], ["Executive", r => r["Executive"]]]),
@@ -797,6 +817,7 @@ function build(){
 
   REPORT = {T, df, checkDetail, removed, kpi: {
     exBranches: new Set(ex.map(r => r["Branch ID"])).size,
+    exInv: invCount(ex), inv: invCount(df), apInv: invCount(df.filter(r => r._res === "APPROVAL IN REMARK")),
     demo: df.filter(r => r._res === "DEMO STOCK").length, chk: df.filter(r => r._res === "CHECK MRP").length,
     lines: df.length, matched: matched.length, ex: ex.length, exV, exPct: mrpV ? exV / mrpV : 0,
     noRule: df.filter(r => r._res === "No Rule Found").length,
@@ -816,7 +837,9 @@ function lakh(x){
   return "₹" + inr(x);
 }
 const rs = x => "₹" + inr(x);
-const bills = n => `${inr(n)} bill${n === 1 ? "" : "s"}`;
+const items = n => `${inr(n)} item${n === 1 ? "" : "s"}`;
+const invs = n => `${inr(n)} invoice${n === 1 ? "" : "s"}`;
+const invCount = rows => new Set(rows.map(r => str(r["TXNName"]))).size;
 const niceDate = s => { if (!s) return ""; const d = new Date(s + "T00:00:00"); return d.toLocaleDateString("en-IN", {day:"numeric", month:"short", year:"numeric"}); };
 
 
@@ -834,11 +857,11 @@ function aggregate(gk){
   const G = GROUPS[gk], m = new Map();
   REPORT.df.forEach(r => {
     const k = G.key(r);
-    if (!m.has(k)) m.set(k, {key: k, label: G.label(r), sub: G.sub(r), n: 0, x: 0, xn: 0, a: 0, an: 0, act: 0});
-    const g = m.get(k);
-    g.n++; g.act += r._disc || 0;
-    if (r._res === "EXTRA DISCOUNT"){ g.x += r._extra; g.xn++; }
-    if (r._res === "APPROVAL IN REMARK"){ g.a += r._extra; g.an++; }
+    if (!m.has(k)) m.set(k, {key: k, label: G.label(r), sub: G.sub(r), n: 0, x: 0, xn: 0, a: 0, an: 0, act: 0, inv: new Set(), xinv: new Set(), ainv: new Set()});
+    const g = m.get(k), t = str(r["TXNName"]);
+    g.n++; g.inv.add(t); g.act += r._disc || 0;
+    if (r._res === "EXTRA DISCOUNT"){ g.x += r._extra; g.xn++; g.xinv.add(t); }
+    if (r._res === "APPROVAL IN REMARK"){ g.a += r._extra; g.an++; g.ainv.add(t); }
   });
   return [...m.values()];
 }
@@ -854,7 +877,7 @@ function renderCards(){
       ${curGroup === "day" ? "" : `<span class="rk">#${i + 1}</span>`}
       <span class="nm">${esc(g.label)}</span><span class="sb">${esc(g.sub || "")}</span>
       <span class="am num">${g.x ? lakh(g.x) : "₹0"}</span>
-      <span class="mt">${bills(g.xn)} with leakage · ${inr(g.n)} checked</span>
+      <span class="mt"><b>${invs(g.xinv.size)}</b> with leakage · ${items(g.xn)}</span><span class="mt" style="color:var(--muted)">${invs(g.inv.size)} checked</span>
       <span class="sh"><i style="width:${Math.max(g.x / tot * 100, g.x ? 1.5 : 0).toFixed(1)}%"></i></span>
       <span class="ft"><span>${(g.x / tot * 100).toFixed(1)}% of total leakage</span>${g.a ? `<span class="ap">+${lakh(g.a)} approval</span>` : ""}</span>
     </button>`).join("") : `<div class="empty">No leakage found.</div>`;
@@ -872,12 +895,12 @@ $("moreBtn").onclick = () => { showAll = !showAll; renderCards(); };
 let DW_ROWS = [], DW_NAME = "";
 function topBy(rows, keyFn, n){
   const m = new Map();
-  rows.forEach(r => { const k = keyFn(r) || "–"; const g = m.get(k) || {k, x: 0, n: 0}; g.x += r._extra || 0; g.n++; m.set(k, g); });
+  rows.forEach(r => { const k = keyFn(r) || "–"; const g = m.get(k) || {k, x: 0, n: 0, inv: new Set()}; g.x += r._extra || 0; g.n++; g.inv.add(str(r["TXNName"])); m.set(k, g); });
   return [...m.values()].sort((a, b) => b.x - a.x).slice(0, n || 6);
 }
 function listBox(title, items){
   if (!items.length) return "";
-  return `<div class="dlist"><h3>${esc(title)}</h3>${items.map(i => `<div class="dli"><span>${esc(i.k)}</span><b class="num">${lakh(i.x)}<small>${bills(i.n)}</small></b></div>`).join("")}</div>`;
+  return `<div class="dlist"><h3>${esc(title)}</h3>${items.map(i => `<div class="dli"><span>${esc(i.k)}</span><b class="num">${lakh(i.x)}<small>${inr(i.inv.size)} inv · ${items(i.n)}</small></b></div>`).join("")}</div>`;
 }
 const DW_COLS = ["Date","Branch ID","Invoice","Executive","Item Name","Pay Mode","Unit MRP","Actual Disc (Rs)","Allowed Disc (Rs)","Extra Disc (Rs)","Offer Rule (PDF)","Result","Internal Remark","Remark"];
 function miniTable(rows, hide){
@@ -885,15 +908,40 @@ function miniTable(rows, hide){
   const data = rows.map(lineRow).sort((a, b) => (b["Extra Disc (Rs)"] || 0) - (a["Extra Disc (Rs)"] || 0));
   return `<div class="tw"><table><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${data.map(r => `<tr>${cols.map(c => cell(c, r[c])).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
+const INV_COLS = ["Date","Branch ID","Invoice","Executive","Items","Products","Pay Mode","MRP Value","Actual Disc (Rs)","Allowed Disc (Rs)","Extra Disc (Rs)","Internal Remark","Remark"];
+function invTable(rows, hide){
+  const cols = INV_COLS.filter(c => !(hide || []).includes(c));
+  const data = invoiceRows(rows);
+  return `<div class="tw"><table class="invt"><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${data.map(r => `<tr class="ir" data-inv="${esc(r.Invoice)}" title="Click to see items of this invoice">${cols.map(c => cell(c, r[c])).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+let DW_O = null;
+function drawItems(filterInv){
+  const o = DW_O;
+  const rows = filterInv ? o.rows.filter(r => str(r["TXNName"]) === filterInv) : o.rows;
+  $("dwItems").innerHTML = `<div class="dsec" style="margin-top:16px">${filterInv ? `Items of invoice ${esc(filterInv)}` : "All items"} <span class="pill p-neu">${rows.length}</span>
+      ${filterInv ? `<button class="sec" id="dwAllItems" type="button" style="padding:3px 10px;font-size:12px;margin-left:8px">Show all items</button>` : ""}</div>` +
+    (rows.length ? miniTable(rows, o.hide) : `<div class="empty">None.</div>`);
+  if (filterInv) $("dwAllItems").onclick = () => { drawItems(null); markInv(null); };
+}
+function markInv(inv){ $("dwB").querySelectorAll("tr.ir").forEach(tr => tr.classList.toggle("sel", tr.dataset.inv === inv)); }
 function openDrawer(o){
+  DW_O = o;
   $("dwT").textContent = o.title; $("dwS").textContent = o.sub || "";
   DW_ROWS = o.rows.concat(o.extraRows || []); DW_NAME = o.title;
+  const nInv = invCount(o.rows);
   $("dwB").innerHTML =
     `<div class="dstats">${o.stats.map(([l, v, c]) => `<div class="dstat ${c || ""}"><div class="l">${l}</div><div class="v num">${v}</div></div>`).join("")}</div>` +
     (o.lists && o.lists.join("") ? `<div class="dsplit">${o.lists.join("")}</div>` : "") +
-    `<div class="dsec">${esc(o.listTitle || "Leakage bills")} <span class="pill p-neu">${o.rows.length}</span></div>` +
-    (o.rows.length ? miniTable(o.rows, o.hide) : `<div class="empty">None.</div>`) +
-    (o.extraRows && o.extraRows.length ? `<div class="dsec" style="margin-top:16px">${esc(o.extraTitle)} <span class="pill p-warn">${o.extraRows.length}</span></div>` + miniTable(o.extraRows, o.hide) : "");
+    `<div class="dsec">${esc(o.listTitle || "Leakage invoices")} <span class="pill p-neu">${invs(nInv)} · ${items(o.rows.length)}</span> <span style="font-size:12px;color:var(--muted);font-weight:500;margin-left:6px">click an invoice to see its items</span></div>` +
+    (o.rows.length ? invTable(o.rows, o.hide) : `<div class="empty">None.</div>`) +
+    `<div id="dwItems"></div>` +
+    (o.extraRows && o.extraRows.length ? `<div class="dsec" style="margin-top:16px">${esc(o.extraTitle)} <span class="pill p-warn">${invs(invCount(o.extraRows))} · ${items(o.extraRows.length)}</span></div>` + invTable(o.extraRows, o.hide) : "");
+  if (o.rows.length) drawItems(null);
+  $("dwB").querySelectorAll("tr.ir").forEach(tr => tr.onclick = () => {
+    if (!o.rows.some(r => str(r["TXNName"]) === tr.dataset.inv)) return;
+    drawItems(tr.dataset.inv); markInv(tr.dataset.inv);
+    $("dwItems").scrollIntoView({behavior: "smooth", block: "start"});
+  });
   $("dwB").scrollTop = 0;
   $("ov").classList.add("on"); $("dw").classList.add("on"); $("dw").setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -903,7 +951,8 @@ $("ov").onclick = closeDrawer; $("dwX").onclick = closeDrawer;
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
 $("dwDl").onclick = () => {
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, toSheet(DW_ROWS.map(lineRow)), "Bills");
+  XLSX.utils.book_append_sheet(wb, toSheet(invoiceRows(DW_ROWS)), "Invoices");
+  XLSX.utils.book_append_sheet(wb, toSheet(DW_ROWS.map(lineRow)), "Items");
   XLSX.writeFile(wb, `Discount_Radar_${DW_NAME.replace(/[^A-Za-z0-9]+/g, "_").slice(0, 40)}.xlsx`);
 };
 
@@ -917,8 +966,8 @@ function openEntity(gk, key, g){
   lists.push(listBox("Offer rules broken", topBy(ex, r => r._rule ? r._rule.product : "")));
   openDrawer({
     title: g.label, sub: [g.sub, GROUPS[gk].title.split("·")[1]?.trim()].filter(Boolean).join(" · "),
-    stats: [["Leakage", rs(g.x), "bad"], ["Leakage bills", inr(g.xn)], ["Bills checked", inr(g.n)], ["Discount given", lakh(g.act)], ["Approval noted", g.a ? lakh(g.a) + " · " + g.an : "–", g.a ? "warn" : ""]],
-    lists, rows: ex, listTitle: "Leakage bills", extraRows: ap, extraTitle: "Extra discount with approval in remark",
+    stats: [["Leakage", rs(g.x), "bad"], ["Leakage invoices", inr(g.xinv.size)], ["Leakage items", inr(g.xn)], ["Invoices checked", inr(g.inv.size)], ["Discount given", lakh(g.act)], ["Approval noted", g.a ? lakh(g.a) + " · " + g.ainv.size + " inv" : "–", g.a ? "warn" : ""]],
+    lists, rows: ex, listTitle: "Leakage invoices", extraRows: ap, extraTitle: "Extra discount with approval in remark",
     hide: gk === "branch" ? ["Branch ID"] : gk === "exec" ? ["Branch ID","Executive"] : []
   });
 }
@@ -927,34 +976,34 @@ function renderDashboard(){
   const k = REPORT.kpi, df = REPORT.df;
   const period = k.from === k.to ? niceDate(k.from) : `${niceDate(k.from)} – ${niceDate(k.to)}`;
   $("heroV").textContent = rs(k.exV);
-  $("heroP").innerHTML = `<b>${bills(k.ex)}</b> got more discount than the offer allowed, without any approval noted. That is <b>${(k.exPct * 100).toFixed(2)}%</b> of the MRP value checked, across <b>${k.exBranches}</b> of ${k.branches} branches.`;
-  $("heroD").textContent = `${period} · ${inr(k.lines)} bills checked · click to see all`;
+  $("heroP").innerHTML = `<b>${invs(k.exInv)}</b> (${items(k.ex)}) got more discount than the offer allowed, without any approval noted. That is <b>${(k.exPct * 100).toFixed(2)}%</b> of the MRP value checked, across <b>${k.exBranches}</b> of ${k.branches} branches.`;
+  $("heroD").textContent = `${period} · ${invs(k.inv)} checked · click to see all`;
   const within = df.filter(r => r._res === "Within Offer").length;
   $("minis").innerHTML = [
-    ["Within offer", ((within / (k.matched || 1)) * 100).toFixed(1) + "%", `${inr(within)} of ${inr(k.matched)} bills`, "good", ""],
-    ["Total discount given", lakh(k.act), "on bills matched to an offer", "", ""],
-    ["Approval noted in remark", lakh(k.apV), `${bills(k.ap)} · verify, not in leakage`, "warn clk", "appr"],
+    ["Within offer", ((within / (k.matched || 1)) * 100).toFixed(1) + "%", `${inr(within)} of ${items(k.matched)}`, "good", ""],
+    ["Total discount given", lakh(k.act), "on items matched to an offer", "", ""],
+    ["Approval noted in remark", lakh(k.apV), `${invs(k.apInv)} · ${items(k.ap)} · verify`, "warn clk", "appr"],
     ["Needs attention", inr(k.noRule + k.demo + k.chk), `${k.noRule} no rule · ${k.demo} demo · ${k.chk} MRP check`, "clk", "attn"]
-  ].map(([l, v, s, c, id]) => `<div class="mini ${c}" ${id ? `data-open="${id}"` : ""}><div class="l">${l}</div><div class="v num">${v}</div><div class="s">${s}</div>${id ? `<div class="go">View bills →</div>` : ""}</div>`).join("");
+  ].map(([l, v, s, c, id]) => `<div class="mini ${c}" ${id ? `data-open="${id}"` : ""}><div class="l">${l}</div><div class="v num">${v}</div><div class="s">${s}</div>${id ? `<div class="go">View invoices →</div>` : ""}</div>`).join("");
   $("minis").querySelectorAll("[data-open]").forEach(el => el.onclick = () => {
     if (el.dataset.open === "appr"){
       const ap = df.filter(r => r._res === "APPROVAL IN REMARK");
       openDrawer({title: "Approval noted in remark", sub: "Extra discount where the remark mentions an approval – verify each one",
-        stats: [["Extra discount", rs(k.apV), "warn"], ["Bills", inr(k.ap)], ["Branches", inr(new Set(ap.map(r => r["Branch ID"])).size)]],
+        stats: [["Extra discount", rs(k.apV), "warn"], ["Invoices", inr(k.apInv)], ["Items", inr(k.ap)], ["Branches", inr(new Set(ap.map(r => r["Branch ID"])).size)]],
         lists: [listBox("By branch", topBy(ap, r => str(r["Branch ID"]))), listBox("By product", topBy(ap, r => famName(r["Product Family"])))],
-        rows: ap, listTitle: "Bills"});
+        rows: ap, listTitle: "Invoices"});
     } else {
       const at = df.filter(r => ["No Rule Found","DEMO STOCK","CHECK MRP"].includes(r._res));
       openDrawer({title: "Needs attention", sub: "No rule = add a row in the master · Demo = demo stock · Check MRP = bill MRP above item list",
-        stats: [["No rule", inr(k.noRule)], ["Demo stock", inr(k.demo)], ["Check MRP", inr(k.chk)]], lists: [], rows: at, listTitle: "Bills"});
+        stats: [["No rule", inr(k.noRule)], ["Demo stock", inr(k.demo)], ["Check MRP", inr(k.chk)]], lists: [], rows: at, listTitle: "Invoices"});
     }
   });
   $("heroCard").onclick = () => {
     const ex = df.filter(r => r._res === "EXTRA DISCOUNT");
-    openDrawer({title: "All leakage bills", sub: period,
-      stats: [["Leakage", rs(k.exV), "bad"], ["Bills", inr(k.ex)], ["Branches", inr(k.exBranches)], ["% of MRP value", (k.exPct * 100).toFixed(2) + "%"]],
+    openDrawer({title: "All leakage invoices", sub: period,
+      stats: [["Leakage", rs(k.exV), "bad"], ["Invoices", inr(k.exInv)], ["Items", inr(k.ex)], ["Branches", inr(k.exBranches)], ["% of MRP value", (k.exPct * 100).toFixed(2) + "%"]],
       lists: [listBox("Top branches", topBy(ex, r => str(r["Branch ID"]))), listBox("Top products", topBy(ex, r => famName(r["Product Family"]))), listBox("Offer rules broken", topBy(ex, r => r._rule.product))],
-      rows: ex, listTitle: "Leakage bills"});
+      rows: ex, listTitle: "Leakage invoices"});
   };
   $("segDay").classList.toggle("hide", REPORT.T["By Date"].length < 2);
   if (curGroup === "day" && REPORT.T["By Date"].length < 2) curGroup = "branch";
@@ -977,11 +1026,11 @@ function renderDashboard(){
 })();
 
 /* ======================= DETAIL TABLES ======================= */
-const TAB_ORDER = ["Extra Discount","Approval in Remark","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks","All Lines","Overview"];
-const TAB_LABEL = {"Extra Discount": "Leakage bills", "Approval in Remark": "Approval in remark", "No Rule / Check": "No rule / check"};
+const TAB_ORDER = ["Leakage Invoices","Extra Discount","Approval in Remark","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks","All Lines","Overview"];
+const TAB_LABEL = {"Leakage Invoices": "Leakage invoices", "Extra Discount": "Leakage items", "Approval in Remark": "Approval in remark", "No Rule / Check": "No rule / check"};
 const LINE_TABS = ["Extra Discount","Approval in Remark","No Rule / Check","All Lines"];
 const KEY_COLS = ["Date","Branch ID","Invoice","Executive","Item Name","Pay Mode","Unit MRP","Actual Disc (Rs)","Allowed Disc (Rs)","Extra Disc (Rs)","Extra Disc %","Offer Rule (PDF)","Result","Internal Remark"];
-let curTab = "Extra Discount", sortCol = null, sortAsc = false;
+let curTab = "Leakage Invoices", sortCol = null, sortAsc = false;
 const MAX_ROWS = 1500;
 const isPct = c => c.includes("%");
 const isMoney = c => /(Rs\)|MRP|Value|Total)/.test(c) && !isPct(c) && c !== "MRP Version";
@@ -989,7 +1038,7 @@ const RES_LABEL = {"EXTRA DISCOUNT": "Leakage", "APPROVAL IN REMARK": "Approval 
 
 function renderTabs(){
   $("tabs").innerHTML = TAB_ORDER.map(t => {
-    const n = LINE_TABS.includes(t) && t !== "All Lines" ? `<span class="n">${REPORT.T[t].length}</span>` : "";
+    const n = (LINE_TABS.includes(t) && t !== "All Lines") || t === "Leakage Invoices" ? `<span class="n">${REPORT.T[t].length}</span>` : "";
     return `<button class="tab ${t === curTab ? "on" : ""}" data-t="${t}">${TAB_LABEL[t] || t}${n}</button>`;
   }).join("");
   $("tabs").querySelectorAll(".tab").forEach(b => b.onclick = () => { curTab = b.dataset.t; sortCol = null; $("q").value = ""; renderTabs(); renderTable(); });
@@ -1032,7 +1081,8 @@ function renderTable(){
   });
   $("cnt").textContent = `${inr(data.length)} rows` + (data.length > MAX_ROWS ? ` · showing first ${MAX_ROWS}, all rows in Excel` : "");
   const notes = {
-    "Extra Discount": "Leakage = discount on bill − discount allowed by the offer master. Round-off up to the tolerance in Settings is ignored.",
+    "Leakage Invoices": "One row per invoice with leakage (an invoice can have many items). Leakage = discount on bill − discount allowed by the offer.",
+    "Extra Discount": "One row per item. Leakage = discount on bill − discount allowed by the offer master. Round-off up to the tolerance in Settings is ignored.",
     "No Rule / Check": "No rule = model / MRP not in the master (add a row). Check MRP = bill MRP higher than item list. Demo stock = demo items (item name/code or remark says DEMO), kept out of leakage.",
     "Approval in Remark": "Extra discount where Internal Remark / Remark mentions an approval (words set in Settings). Kept out of leakage – verify the approval.",
     "Data Checks": "Sales statement checks on cleaned data. Full rows are in the Excel report."
@@ -1062,7 +1112,7 @@ function toSheet(rows){
 }
 $("dlBtn").onclick = () => {
   const wb = XLSX.utils.book_new();
-  const order = ["Overview","Extra Discount","Approval in Remark","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks"];
+  const order = ["Overview","Leakage Invoices","Extra Discount","Approval in Remark","By Branch","By Executive","By Model","By Offer Rule","By Date","By Pay Mode","No Rule / Check","Data Checks"];
   order.forEach(n => XLSX.utils.book_append_sheet(wb, toSheet(REPORT.T[n]), (TAB_LABEL[n] || n).replace("/", "-").slice(0, 31)));
   REPORT.checkDetail.forEach(([n, rows]) => XLSX.utils.book_append_sheet(wb, toSheet(rows), ("Chk - " + n).slice(0, 31)));
   if (REPORT.removed.length) XLSX.utils.book_append_sheet(wb, toSheet(REPORT.removed.map(r => ({
@@ -1085,7 +1135,7 @@ $("runBtn").onclick = () => {
     try {
       const t0 = performance.now();
       build();
-      curTab = "Extra Discount"; sortCol = null;
+      curTab = "Leakage Invoices"; sortCol = null;
       renderDashboard(); renderTabs(); renderTable();
       $("results").classList.remove("hide");
       ["dlBtn","changeBtn","printBtn"].forEach(id => $(id).classList.remove("hide"));
