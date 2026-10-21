@@ -249,6 +249,17 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .itm .c{text-align:right;font-variant-numeric:tabular-nums}
 .itm .c small{display:block;color:var(--muted);font-size:10.5px}
 .itm .c.x{color:var(--leak);font-weight:650}
+.itm .c em,.invh .v em{display:block;font-style:normal;font-size:11px;color:var(--muted);font-weight:500}
+.invh .v em{display:inline;margin-left:2px}
+.itm .c.x em{color:var(--leak)}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.tg{font-size:10.5px;font-weight:600;border-radius:20px;padding:1px 8px;background:var(--card);border:1px solid var(--line);color:var(--ink2);white-space:nowrap}
+.tg.ln{background:#efe9ff;color:#5b3fc4;border-color:transparent}
+.tg.cs{background:var(--good-bg);color:var(--good);border-color:transparent}
+.tg.crt{background:#e6f0ff;color:#1d4fb8;border-color:transparent}
+:root[data-theme="dark"] .tg.ln{background:#2a2147;color:#b9a8ff}
+:root[data-theme="dark"] .tg.crt{background:#16284a;color:#8fb4ff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tg.ln{background:#2a2147;color:#b9a8ff}:root:not([data-theme="light"]) .tg.crt{background:#16284a;color:#8fb4ff}}
 @media (max-width: 700px){
   #ov{padding:0;align-items:stretch}
   #md{max-height:100vh;border-radius:0}
@@ -964,6 +975,27 @@ function crumbs(n){
   if (n.exec) parts.push(`<span>${esc(n.exec)}</span>`);
   return parts.join(" › ");
 }
+const pctOf = (a, b) => b ? (a / b * 100).toFixed(1) + "%" : "";
+function payChip(r){
+  return `<span class="tg ${r._pay === "Loan" ? "ln" : "cs"}">${r._pay}${r._pay === "Loan" && str(r["Affordability"]) ? " · " + esc(str(r["Affordability"]).split(",")[0]) : ""}</span>` +
+         `<span class="tg ${r._crt ? "crt" : ""}">${r._crt ? "CRT applied" : "No CRT"}</span>`;
+}
+function basis(r){
+  const u = r._rule; if (!u) return "";
+  if (u.type === "FIXED"){
+    const loanP = r._pay === "Loan" && u.loan;
+    return `Offer price ${rs(loanP ? u.loan : u.offer)}${loanP ? " (loan)" : ""}`;
+  }
+  const loan = r._pay === "Loan" && (u.lv != null || u.lc != null);
+  const v = loan ? (u.lv || 0) : u.venus, c = loan ? (u.lc || 0) : u.crt;
+  const parts = [`Venus ${(v * 100).toFixed(0)}%`];
+  if (c) parts.push(r._crt ? `CRT ${(c * 100).toFixed(0)}%` : `CRT ${(c * 100).toFixed(0)}% not applied`);
+  let t = parts.join(" + ");
+  if (u.combo && r._combo) t += " + 1% Gripp combo";
+  if (u.freeWords && u.freeWords.length && u.freeAlt != null && !freebieOnInvoice(u, r)) t = `No freebie taken → up to ${(u.freeAlt * 100).toFixed(0)}%`;
+  if (u.type === "ON MRP" && t.startsWith("Venus 0%")) t = "On MRP (no discount)";
+  return t + (loan ? " (loan)" : "");
+}
 function invoiceCards(rows){
   // rows: all rows in scope; show invoices that have leakage or approval
   const show = rows.filter(r => r._res === "EXTRA DISCOUNT" || r._res === "APPROVAL IN REMARK" || r._res === "No Rule Found" || r._res === "DEMO STOCK" || r._res === "CHECK MRP");
@@ -980,20 +1012,21 @@ function invoiceCards(rows){
     const ir = str(r0["Internal Remark"]), rm = str(r0["Remark"]);
     return `<div class="inv ${kind}">
       <div class="invh">
-        <div class="no">${esc(v.t)}<small>${niceDate(ymd(r0._date))} · ${esc(r0["Executive"])} · ${r0._pay}${r0._crt ? " · CRT" : ""}</small></div>
+        <div class="no">${esc(v.t)}<small>${niceDate(ymd(r0._date))} · ${esc(r0["Executive"])}</small><span class="tags">${payChip(r0)}</span></div>
         <div class="pr">${esc(prods)}<small>${items(v.rows.length)} flagged${v.all.length > v.rows.length ? ` · ${v.all.length} on invoice` : ""}</small></div>
-        <div><div class="k">Discount given</div><div class="v">${rs(sum(v.rows, r => r._disc || 0))}</div></div>
-        <div><div class="k">Allowed</div><div class="v">${rs(sum(v.rows, r => r._allow || 0))}</div></div>
+        <div><div class="k">Discount given</div><div class="v">${rs(sum(v.rows, r => r._disc || 0))} <em>${pctOf(sum(v.rows, r => r._disc || 0), sum(v.rows, r => r._mrpValue || 0))}</em></div></div>
+        <div><div class="k">Allowed</div><div class="v">${rs(sum(v.rows, r => r._allow || 0))} <em>${pctOf(sum(v.rows, r => r._allow || 0), sum(v.rows, r => r._mrpValue || 0))}</em></div></div>
         <div><div class="k">${v.x ? "Leakage" : v.a ? "Approval noted" : "Status"}</div><div class="v ${v.x ? "x" : ""}">${v.x ? rs(v.x) : v.a ? rs(v.a) : esc(RES_LABEL[r0._res] || r0._res)}</div></div>
         <div class="ar">›</div>
       </div>
       ${ir || rm ? `<div class="invr">${ir ? `<b>Internal remark:</b> ${esc(ir)} ` : ""}${rm ? `<b>Remark:</b> ${esc(rm)}` : ""}</div>` : ""}
       <div class="itms">${v.all.map(r => `<div class="itm">
-          <div class="n">${esc(r["Item_Name"])}<small>${esc(r._rule ? r._rule.product : "No offer rule")} · ${esc(RES_LABEL[r._res] || r._res)}</small></div>
+          <div class="n">${esc(r["Item_Name"])}<small>${esc(r._rule ? r._rule.product : "No offer rule")} · ${esc(RES_LABEL[r._res] || r._res)}</small>
+            <span class="tags">${payChip(r)}${r._rule ? `<span class="tg">${esc(basis(r))}</span>` : ""}</span></div>
           <div class="c"><small>MRP</small>${rs(r._unitMrp)}</div>
-          <div class="c"><small>Given</small>${rs(r._disc)}</div>
-          <div class="c"><small>Allowed</small>${r._allow == null ? "–" : rs(r._allow)}</div>
-          <div class="c ${r._res === "EXTRA DISCOUNT" ? "x" : ""}"><small>Extra</small>${r._extra > 0 ? rs(r._extra) : "–"}</div>
+          <div class="c"><small>Given</small>${rs(r._disc)}<em>${pctOf(r._disc, r._mrpValue)}</em></div>
+          <div class="c"><small>Allowed</small>${r._allow == null ? "–" : rs(r._allow)}<em>${r._allowPct == null ? "" : (r._allowPct * 100).toFixed(1) + "%"}</em></div>
+          <div class="c ${r._res === "EXTRA DISCOUNT" ? "x" : ""}"><small>Extra</small>${r._extra > 0 ? rs(r._extra) : "–"}<em>${r._extra > 0 ? pctOf(r._extra, r._mrpValue) : ""}</em></div>
         </div>`).join("")}</div>
     </div>`;
   }).join("")}</div>`;
