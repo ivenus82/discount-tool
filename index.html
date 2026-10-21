@@ -76,6 +76,7 @@ th,td{padding:6px 9px;border-bottom:1px solid var(--line);white-space:nowrap;tex
 th{position:sticky;top:0;background:var(--card);cursor:pointer;user-select:none;font-weight:650;z-index:1}
 th:hover{color:var(--accent)}
 td.n{text-align:right;font-variant-numeric:tabular-nums}
+td.lt{max-width:340px;overflow:hidden;text-overflow:ellipsis}
 tr:nth-child(even) td{background:var(--row)}
 .pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11.5px;font-weight:600}
 .p-bad{background:var(--bad-bg);color:var(--bad)}
@@ -484,7 +485,8 @@ function lineRow(r){
     "Actual Disc (Rs)": r._disc, "Actual Disc %": r._actPct,
     "Rule ID": r._rule ? r._rule.id : "", "Offer Rule (PDF)": r._rule ? r._rule.product : "",
     "Allowed Disc %": r._allowPct, "Allowed Disc (Rs)": r._allow,
-    "Extra Disc (Rs)": r._extra, "Extra Disc %": r._extraPct, "Bill Total": r._total, "Result": r._res
+    "Extra Disc (Rs)": r._extra, "Extra Disc %": r._extraPct, "Bill Total": r._total, "Result": r._res,
+    "Internal Remark": r["Internal Remark"], "Remark": r["Remark"], "Scheme": r["Scheme"]
   };
 }
 function groupSumm(df, keys){
@@ -562,7 +564,8 @@ function build(){
   const checkDetail = chk.filter(c => c.rows.length).map(c => [c.name, c.rows.map(r => ({
     "Date": ymd(r._date), "Branch ID": r["Branch ID"], "Invoice": r["TXNName"], "Type": r._type, "Executive": r["Executive"],
     "Item Code": r["Item Code"], "Item Name": r["Item_Name"], "IMEI / Batch": r["Batch No"], "Qty": r._qty,
-    "MRP": r._mrp, "MRP Discount": r._disc, "Total": r._total}))]);
+    "MRP": r._mrp, "MRP Discount": r._disc, "Total": r._total,
+    "Internal Remark": r["Internal Remark"], "Remark": r["Remark"]}))]);
 
   REPORT = {T, checkDetail, removed, kpi: {
     lines: df.length, matched: matched.length, ex: ex.length, exV, exPct: mrpV ? exV / mrpV : 0,
@@ -602,7 +605,8 @@ function cell(c, v){
     if (isPct(c)) return `<td class="n">${pct(v)}</td>`;
     return `<td class="n">${isMoney(c) || Math.abs(v) >= 1000 ? inr(v) : (Number.isInteger(v) ? v : v.toFixed(2))}</td>`;
   }
-  return `<td>${String(v).replace(/[&<>]/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[s]))}</td>`;
+  const t = String(v).replace(/[&<>"]/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[s]));
+  return t.length > 45 ? `<td class="lt" title="${t}">${t}</td>` : `<td>${t}</td>`;
 }
 function renderTable(){
   let data = REPORT.T[curTab] || [];
@@ -658,7 +662,8 @@ $("dlBtn").onclick = () => {
   REPORT.checkDetail.forEach(([n, rows]) => XLSX.utils.book_append_sheet(wb, toSheet(rows), ("Chk - " + n).slice(0, 31)));
   if (REPORT.removed.length) XLSX.utils.book_append_sheet(wb, toSheet(REPORT.removed.map(r => ({
     "Removed Reason": r["Removed Reason"], "Date": r["TXNDate"], "Branch ID": r["Original Branch ID"] || r["Branch ID"],
-    "Invoice": r["TXNName"], "Executive": r["Executive"], "Item Name": r["Item_Name"], "Total": num(r["Total"])}))), "Removed Rows");
+    "Invoice": r["TXNName"], "Executive": r["Executive"], "Item Name": r["Item_Name"], "Total": num(r["Total"]),
+    "Internal Remark": r["Internal Remark"]}))), "Removed Rows");
   XLSX.utils.book_append_sheet(wb, toSheet(REPORT.T["All Lines"]), "All Lines");
   XLSX.writeFile(wb, `Discount_Check_${REPORT.kpi.from}_to_${REPORT.kpi.to}.xlsx`);
 };
