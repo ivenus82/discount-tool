@@ -286,11 +286,6 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
     <div class="minis" id="minis"></div>
   </div>
 
-  <div class="card">
-    <div class="ct"><h2>Where every bill landed</h2><span id="stripSub"></span></div>
-    <div class="strip" id="strip"></div>
-    <div class="legend" id="stripLg"></div>
-  </div>
 
   <div class="grid2">
     <div class="card"><div class="ct"><h2>Top branches by leakage</h2><span>extra discount, ₹</span></div><div class="bars" id="cBranch"></div></div>
@@ -790,22 +785,6 @@ function renderDashboard(){
     ["Approval noted in remark", lakh(k.apV), `${bills(k.ap)} · verify, not in leakage`, "warn"],
     ["Needs attention", inr(k.noRule + k.demo + k.chk), `${k.noRule} no rule · ${k.demo} demo · ${k.chk} MRP check`, ""]
   ].map(([l, v, s, c]) => `<div class="mini ${c}"><div class="l">${l}</div><div class="v num">${v}</div><div class="s">${s}</div></div>`).join("");
-
-  // outcome strip
-  const segs = [
-    ["Within offer", "Within Offer", "var(--good-bar)"],
-    ["Leakage", "EXTRA DISCOUNT", "var(--leak)"],
-    ["Approval in remark", "APPROVAL IN REMARK", "var(--warn-bar)"],
-    ["Demo / no rule / MRP check", null, "var(--neutral)"]
-  ].map(([label, res, color]) => {
-    const n = res ? df.filter(r => r._res === res).length : df.filter(r => ["DEMO STOCK","No Rule Found","CHECK MRP"].includes(r._res)).length;
-    const v = res ? sum(df.filter(r => r._res === res), r => r._extra > 0 && res !== "Within Offer" ? r._extra : 0) : 0;
-    return {label, n, color, v};
-  });
-  const tot = df.length || 1;
-  $("stripSub").textContent = `${inr(df.length)} bills · Apple hardware + care plans`;
-  $("strip").innerHTML = segs.filter(s => s.n).map(s => `<div style="flex:${s.n};background:${s.color}" data-tip="${esc(`${s.label}\n${inr(s.n)} bills (${(s.n / tot * 100).toFixed(1)}%)${s.v ? "\nExtra discount: " + rs(s.v) : ""}`)}"></div>`).join("");
-  $("stripLg").innerHTML = segs.map(s => `<div class="lg"><i style="background:${s.color}"></i>${s.label} <b class="num">${inr(s.n)}</b> <span>(${(s.n / tot * 100).toFixed(1)}%)</span></div>`).join("");
 
   // charts
   const T = REPORT.T;
